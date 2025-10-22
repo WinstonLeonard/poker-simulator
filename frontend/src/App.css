@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+#root {
+  margin: 0 auto;
+  /* padding: 6rem; */
+  text-align: center;
+  width: 100%;
+  /* background-color: red; */
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+@keyframes typewriter {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-typewriter {
+  overflow: hidden; /* Hide the text that is not yet typed */
+  white-space: nowrap; /* Prevent the text from wrapping to a new line */
+  width: 0; /* Start with width 0 */
+  animation: typewriter 0.5s steps(1000) 1s forwards; /* Adjust the timing and steps to your preference */
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
