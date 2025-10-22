@@ -5,6 +5,7 @@ import "../App.css";
 
 function HomePage() {
   const [gamePin, setGamePin] = useState("");
+  const [playerName, setPlayerName] = useState("");
 
   const handleJoinGame = () => {
     // Basic validation
@@ -38,6 +39,13 @@ function HomePage() {
             Join a Game 🧩
           </h2>
           <div className="flex flex-col gap-4">
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="ENTER YOUR NAME"
+              className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-center text-xl placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
+            />
             <input
               type="text"
               value={gamePin}
