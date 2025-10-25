@@ -4,6 +4,10 @@ import { useParams } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
 import { getRoomData } from "../api/api";
 import { usePlayer } from "../context/PlayerProvider";
+import {
+  convertPlayersArrayToObject,
+  convertPlayersObjectToArray,
+} from "../utils/utils";
 
 const LobbyPagePlayer = () => {
   const { roomId } = useParams();
@@ -15,18 +19,10 @@ const LobbyPagePlayer = () => {
       try {
         const data = await getRoomData(roomId);
         // Transform data.players from object to array
-        const playersArray = Object.entries(data.players || {}).map(
-          ([id, info]) => ({
-            id,
-            name: info.name,
-            money: info.money,
-            dealer: false,
-          })
-        );
+        const playersArray = convertPlayersObjectToArray(data.players);
+        console.log(playersArray);
         setPlayers(playersArray);
-      } catch (error) {
-        console.error("Error fetching room data:", error);
-      }
+      } catch (error) {}
     };
     fetchRoomData();
   }, []);
@@ -36,12 +32,6 @@ const LobbyPagePlayer = () => {
 
     // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
-      console.log("HERE1");
-
-      console.log("Received 'playerDataChanged'", roomData);
-      console.log("HERE");
-      console.log("TRUE", roomData && roomData.players);
-
       if (roomData && roomData.players) {
         const playersArray = Object.entries(roomData.players).map(
           ([id, data]) => ({
@@ -49,7 +39,6 @@ const LobbyPagePlayer = () => {
             ...data,
           })
         );
-        console.log("updatedPLayersArray", playersArray);
         setPlayers(playersArray);
       }
     };
@@ -59,7 +48,6 @@ const LobbyPagePlayer = () => {
 
     // 3. Return a cleanup function
     return () => {
-      console.log("Cleaning up 'playerDataChanged' listener");
       // This removes the listener when the component unmounts
       socket.off("playerDataChanged", handlePlayerDataChanged);
     };

@@ -65,7 +65,12 @@ io.on("connection", (socket) => {
     if (rooms[roomId]) {
       socket.join(roomId); // Join the room
       if (!rooms[roomId].players[socket.id]) {
-        rooms[roomId].players[socket.id] = { name: playerName, money: 1000 };
+        console.log(`player ${playerName}, ${socket.id} has joined the room`);
+        rooms[roomId].players[socket.id] = {
+          name: playerName,
+          money: 1000,
+          dealer: false,
+        };
         io.to(roomId).emit("message", `A new player has joined room ${roomId}`);
         io.to(roomId).emit("playerDataChanged", rooms[roomId]);
       }

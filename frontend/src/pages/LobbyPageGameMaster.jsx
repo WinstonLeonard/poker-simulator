@@ -5,6 +5,10 @@ import { usePlayer } from "../context/PlayerProvider";
 import GMPlayerCard from "../components/GMPlayerCard";
 import GMButton from "../components/GMButton";
 import { getRoomData } from "../api/api";
+import {
+  convertPlayersArrayToObject,
+  convertPlayersObjectToArray,
+} from "../utils/utils";
 
 const LobbyPageGameMaster = () => {
   const { roomId } = useParams();
@@ -22,14 +26,7 @@ const LobbyPageGameMaster = () => {
       try {
         const data = await getRoomData(roomId);
         // Transform data.players from object to array
-        const playersArray = Object.entries(data.players || {}).map(
-          ([id, info]) => ({
-            id,
-            name: info.name,
-            money: info.money,
-            dealer: false,
-          })
-        );
+        const playersArray = convertPlayersObjectToArray(data.players);
         setPlayers(playersArray);
       } catch (error) {
         console.error("Error fetching room data:", error);
@@ -43,9 +40,6 @@ const LobbyPageGameMaster = () => {
 
     // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
-      console.log("Received 'playerDataChanged'", roomData);
-      console.log(roomData);
-
       if (roomData && roomData.players) {
         const playersArray = Object.entries(roomData.players).map(
           ([id, data]) => ({
@@ -62,7 +56,6 @@ const LobbyPageGameMaster = () => {
 
     // 3. Return a cleanup function
     return () => {
-      console.log("Cleaning up 'playerDataChanged' listener");
       // This removes the listener when the component unmounts
       socket.off("playerDataChanged", handlePlayerDataChanged);
     };
@@ -84,13 +77,21 @@ const LobbyPageGameMaster = () => {
       dealer: p.id === playerId,
     }));
     setPlayers(updatedPlayers);
-    socket.emit("playerDataChange", roomId, updatedPlayers);
+    socket.emit(
+      "playerDataChange",
+      roomId,
+      convertPlayersArrayToObject(updatedPlayers)
+    );
   };
 
   const handleRemovePlayer = (playerId) => {
     const updatedPlayers = players.filter((p) => p.id !== playerId);
     setPlayers(updatedPlayers);
-    socket.emit("playerDataChange", roomId, updatedPlayers);
+    socket.emit(
+      "playerDataChange",
+      roomId,
+      convertPlayersArrayToObject(updatedPlayers)
+    );
     // In a real app: socket.emit('removePlayer', { roomId, playerId });
   };
 
@@ -105,7 +106,11 @@ const LobbyPageGameMaster = () => {
       return p;
     });
     setPlayers(updatedPlayers);
-    socket.emit("playerDataChange", roomId, updatedPlayers);
+    socket.emit(
+      "playerDataChange",
+      roomId,
+      convertPlayersArrayToObject(updatedPlayers)
+    );
   };
 
   const handleTransferMoney = () => {
@@ -134,7 +139,11 @@ const LobbyPageGameMaster = () => {
       return p;
     });
     setPlayers(updatedPlayers);
-    socket.emit("playerDataChange", roomId, updatedPlayers);
+    socket.emit(
+      "playerDataChange",
+      roomId,
+      convertPlayersArrayToObject(updatedPlayers)
+    );
     setTransferAmount(0);
   };
 
