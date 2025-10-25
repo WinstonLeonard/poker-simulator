@@ -1,29 +1,50 @@
-// src/pages/HomePage.jsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../App.css";
+import { usePlayer } from "../context/PlayerProvider";
+import { useNavigate } from "react-router-dom";
+import { roomChecker } from "../api/api";
+import ErrorModal from "../components/ErrorModal";
 
 function HomePage() {
+  const navigate = useNavigate();
   const [gamePin, setGamePin] = useState("");
-  const [playerName, setPlayerName] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { setPlayerName, playerName, setGameMaster, socket, setSocket } =
+    usePlayer();
 
-  const handleJoinGame = () => {
-    // Basic validation
+  const generateRandomNumber = () => {
+    const min = 100000;
+    const max = 999999;
+    const rand = min + Math.random() * (max - min);
+    return Math.floor(rand).toString();
+  };
+
+  const handleJoinGame = async () => {
+    if (!playerName.trim()) {
+      alert("Please enter a game name.");
+      return;
+    }
     if (!gamePin.trim()) {
       alert("Please enter a game PIN.");
       return;
     }
-    // TODO: Add logic to join the game with the pin
-    // Example: navigate(`/game/${gamePin}`);
-    alert(`Joining game with PIN: ${gamePin}`);
-    console.log(`Attempting to join game with PIN: ${gamePin}`);
+    const roomExists = await roomChecker(gamePin);
+    console.log(roomExists);
+    if (roomExists.status === 404) {
+      setIsModalOpen(true);
+    } else {
+      setGameMaster(false);
+      navigate(`/lobby/${gamePin}`);
+      socket.emit("joinRoom", gamePin, playerName);
+    }
   };
 
   const handleCreateGame = () => {
-    // TODO: Add logic to create a new game and get a new game ID
-    // Example: const newGame = await createGameAPI(); navigate(`/game/${newGame.id}`);
-    alert("Starting a new game!");
-    console.log("Attempting to create a new game.");
+    const newGameId = generateRandomNumber();
+    console.log(`Creating new game with ID: ${newGameId}`);
+    socket.emit("createRoom", newGameId.toString());
+    setGameMaster(true);
+    navigate(`/lobby/${newGameId}`);
   };
 
   return (
@@ -82,6 +103,14 @@ function HomePage() {
             Create New Game
           </button>
         </div>
+        <ErrorModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Validation Error"
+          message={
+            "Room does not exist. Please check the Game PIN and try again."
+          }
+        />
       </div>
     </main>
   );

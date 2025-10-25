@@ -1,9 +1,22 @@
 // src/App.jsx
 
 import HomePage from "./pages/HomePage"; // Adjust the path if you saved it elsewhere
+import PlayerProvider from "./context/PlayerProvider";
+import LobbyPage from "./pages/LobbyPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
-  return <HomePage />;
+  return (
+    // All routes inside PlayerProvider can access the player's name
+    <PlayerProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/lobby/:roomId" element={<LobbyPage />} />
+        </Routes>
+      </Router>
+    </PlayerProvider>
+  );
 }
 
 export default App;
