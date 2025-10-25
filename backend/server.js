@@ -74,14 +74,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("dealerChange", (roomId, dealerId) => {
-    const room = rooms[roomId];
-    Object.keys(room.players).forEach((playerId) => {
-      // Set 'dealer' to true only for the matching dealerId,
-      // and false for everyone else.
-      room.players[playerId].dealer = playerId === dealerId;
-    });
-
+  socket.on("playerDataChange", (roomId, playerData) => {
+    rooms[roomId].players = playerData;
+    console.log("updated room data", rooms[roomId]);
     io.to(roomId).emit("playerDataChanged", rooms[roomId]);
   });
 

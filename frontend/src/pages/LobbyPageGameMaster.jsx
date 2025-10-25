@@ -44,6 +44,7 @@ const LobbyPageGameMaster = () => {
     // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
       console.log("Received 'playerDataChanged'", roomData);
+      console.log(roomData);
 
       if (roomData && roomData.players) {
         const playersArray = Object.entries(roomData.players).map(
@@ -78,37 +79,33 @@ const LobbyPageGameMaster = () => {
   // --- Handler Functions ---
 
   const handleSetDealer = (playerId) => {
-    console.log(`Setting dealer to player ID: ${playerId}`);
-    setPlayers((currentPlayers) =>
-      currentPlayers.map((p) => ({
-        ...p,
-        dealer: p.id === playerId,
-      }))
-    );
-    socket.emit("dealerChange", roomId, playerId);
+    const updatedPlayers = players.map((p) => ({
+      ...p,
+      dealer: p.id === playerId,
+    }));
+    setPlayers(updatedPlayers);
+    socket.emit("playerDataChange", roomId, updatedPlayers);
   };
 
   const handleRemovePlayer = (playerId) => {
-    setPlayers((currentPlayers) =>
-      currentPlayers.filter((p) => p.id !== playerId)
-    );
+    const updatedPlayers = players.filter((p) => p.id !== playerId);
+    setPlayers(updatedPlayers);
+    socket.emit("playerDataChange", roomId, updatedPlayers);
     // In a real app: socket.emit('removePlayer', { roomId, playerId });
   };
 
   const handleUpdateMoney = (playerId, amount) => {
     const numAmount = parseInt(amount);
     if (isNaN(numAmount)) return;
-
-    setPlayers((currentPlayers) =>
-      currentPlayers.map((p) => {
-        if (p.id === playerId) {
-          const newMoney = p.money + numAmount;
-          return { ...p, money: newMoney < 0 ? 0 : newMoney }; // Prevent negative money
-        }
-        return p;
-      })
-    );
-    // In a real app: socket.emit('updateMoney', { roomId, playerId, amount: numAmount });
+    const updatedPlayers = players.map((p) => {
+      if (p.id === playerId) {
+        const newMoney = p.money + numAmount;
+        return { ...p, money: newMoney < 0 ? 0 : newMoney }; // Prevent negative money
+      }
+      return p;
+    });
+    setPlayers(updatedPlayers);
+    socket.emit("playerDataChange", roomId, updatedPlayers);
   };
 
   const handleTransferMoney = () => {
@@ -127,20 +124,17 @@ const LobbyPageGameMaster = () => {
       console.warn(`${fromPlayer.name} does not have enough money.`);
       return;
     }
-
-    // Update state for both players
-    setPlayers((currentPlayers) =>
-      currentPlayers.map((p) => {
-        if (p.id === transferFrom) {
-          return { ...p, money: p.money - numAmount };
-        }
-        if (p.id === transferTo) {
-          return { ...p, money: p.money + numAmount };
-        }
-        return p;
-      })
-    );
-    // In a real app: socket.emit('transferMoney', { roomId, fromId: transferFrom, toId: transferTo, amount: numAmount });
+    const updatedPlayers = players.map((p) => {
+      if (p.id === transferFrom) {
+        return { ...p, money: p.money - numAmount };
+      }
+      if (p.id === transferTo) {
+        return { ...p, money: p.money + numAmount };
+      }
+      return p;
+    });
+    setPlayers(updatedPlayers);
+    socket.emit("playerDataChange", roomId, updatedPlayers);
     setTransferAmount(0);
   };
 

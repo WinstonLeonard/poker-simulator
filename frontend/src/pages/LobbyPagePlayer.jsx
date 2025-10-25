@@ -36,7 +36,11 @@ const LobbyPagePlayer = () => {
 
     // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
+      console.log("HERE1");
+
       console.log("Received 'playerDataChanged'", roomData);
+      console.log("HERE");
+      console.log("TRUE", roomData && roomData.players);
 
       if (roomData && roomData.players) {
         const playersArray = Object.entries(roomData.players).map(
@@ -45,6 +49,7 @@ const LobbyPagePlayer = () => {
             ...data,
           })
         );
+        console.log("updatedPLayersArray", playersArray);
         setPlayers(playersArray);
       }
     };
