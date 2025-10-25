@@ -43,6 +43,11 @@ app.get("/api/rooms/:roomId", (req, res) => {
   }
 });
 
+app.get("/api/roomData/:roomId", (req, res) => {
+  const { roomId } = req.params;
+  res.status(200).json(rooms[roomId] || {});
+});
+
 // Handle connection to the server
 io.on("connection", (socket) => {
   console.log("a user connected");
@@ -59,13 +64,25 @@ io.on("connection", (socket) => {
   socket.on("joinRoom", (roomId, playerName) => {
     if (rooms[roomId]) {
       socket.join(roomId); // Join the room
-      //console.log(`${playerName} joined room: ${roomId}`);
-      rooms[roomId].players[socket.id] = { name: playerName, money: 1000 };
-      //console.log(JSON.stringify(rooms, null, 2));
-      io.to(roomId).emit("message", `A new player has joined room ${roomId}`);
+      if (!rooms[roomId].players[socket.id]) {
+        rooms[roomId].players[socket.id] = { name: playerName, money: 1000 };
+        io.to(roomId).emit("message", `A new player has joined room ${roomId}`);
+        io.to(roomId).emit("playerDataChanged", rooms[roomId]);
+      }
     } else {
       socket.emit("error", "Room does not exist.");
     }
+  });
+
+  socket.on("dealerChange", (roomId, dealerId) => {
+    const room = rooms[roomId];
+    Object.keys(room.players).forEach((playerId) => {
+      // Set 'dealer' to true only for the matching dealerId,
+      // and false for everyone else.
+      room.players[playerId].dealer = playerId === dealerId;
+    });
+
+    io.to(roomId).emit("playerDataChanged", rooms[roomId]);
   });
 
   // Handle messages from players in the game room

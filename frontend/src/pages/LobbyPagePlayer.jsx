@@ -2,15 +2,63 @@ import React, { useState, useEffect } from "react";
 import "../App.css";
 import { useParams } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
+import { getRoomData } from "../api/api";
+import { usePlayer } from "../context/PlayerProvider";
 
 const LobbyPagePlayer = () => {
   const { roomId } = useParams();
-  const [players, setPlayers] = useState([
-    { name: "Alice", money: 1000, dealer: true },
-    { name: "Bob", money: 1000, dealer: false },
-    { name: "Charlie", money: 800, dealer: false },
-    { name: "David", money: 1200, dealer: false },
-  ]);
+  const [players, setPlayers] = useState([]);
+  const { socket } = usePlayer();
+
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      try {
+        const data = await getRoomData(roomId);
+        // Transform data.players from object to array
+        const playersArray = Object.entries(data.players || {}).map(
+          ([id, info]) => ({
+            id,
+            name: info.name,
+            money: info.money,
+            dealer: false,
+          })
+        );
+        setPlayers(playersArray);
+      } catch (error) {
+        console.error("Error fetching room data:", error);
+      }
+    };
+    fetchRoomData();
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // 1. Define the handler function for your event
+    const handlePlayerDataChanged = (roomData) => {
+      console.log("Received 'playerDataChanged'", roomData);
+
+      if (roomData && roomData.players) {
+        const playersArray = Object.entries(roomData.players).map(
+          ([id, data]) => ({
+            id,
+            ...data,
+          })
+        );
+        setPlayers(playersArray);
+      }
+    };
+
+    // 2. Register the listener
+    socket.on("playerDataChanged", handlePlayerDataChanged);
+
+    // 3. Return a cleanup function
+    return () => {
+      console.log("Cleaning up 'playerDataChanged' listener");
+      // This removes the listener when the component unmounts
+      socket.off("playerDataChanged", handlePlayerDataChanged);
+    };
+  }, [socket]);
 
   return (
     <main className="bg-slate-900 min-h-screen flex flex-col items-center p-4 text-white font-sans">

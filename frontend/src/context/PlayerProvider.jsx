@@ -7,16 +7,18 @@ const PlayerProvider = ({ children }) => {
   const [playerName, setPlayerName] = useState("");
   const [gameMaster, setGameMaster] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [id, setId] = useState("");
   useEffect(() => {
     const newSocket = io("http://localhost:5000");
     setSocket(newSocket);
+    setId(newSocket.id);
     console.log("Socket connection established in provider.");
-
     return () => {
       newSocket.disconnect();
       console.log("Socket disconnected on provider unmount.");
     };
   }, []); // Empty array ensures this runs only once
+
   const value = {
     playerName,
     setPlayerName,

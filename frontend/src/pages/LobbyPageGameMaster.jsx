@@ -1,22 +1,71 @@
 import React, { useState, useEffect } from "react";
 import "../App.css";
 import { useParams, useNavigate } from "react-router-dom";
+import { usePlayer } from "../context/PlayerProvider";
 import GMPlayerCard from "../components/GMPlayerCard";
 import GMButton from "../components/GMButton";
+import { getRoomData } from "../api/api";
 
 const LobbyPageGameMaster = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const [players, setPlayers] = useState([
-    { id: "1", name: "Alice", money: 1000, dealer: true },
-    { id: "2", name: "Bob", money: 1000, dealer: false },
-    { id: "3", name: "Charlie", money: 800, dealer: false },
-  ]);
+  const [players, setPlayers] = useState([]);
+  const { socket } = usePlayer();
 
   // State for the transfer form
   const [transferFrom, setTransferFrom] = useState("");
   const [transferTo, setTransferTo] = useState("");
   const [transferAmount, setTransferAmount] = useState(0);
+
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      try {
+        const data = await getRoomData(roomId);
+        // Transform data.players from object to array
+        const playersArray = Object.entries(data.players || {}).map(
+          ([id, info]) => ({
+            id,
+            name: info.name,
+            money: info.money,
+            dealer: false,
+          })
+        );
+        setPlayers(playersArray);
+      } catch (error) {
+        console.error("Error fetching room data:", error);
+      }
+    };
+    fetchRoomData();
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // 1. Define the handler function for your event
+    const handlePlayerDataChanged = (roomData) => {
+      console.log("Received 'playerDataChanged'", roomData);
+
+      if (roomData && roomData.players) {
+        const playersArray = Object.entries(roomData.players).map(
+          ([id, data]) => ({
+            id,
+            ...data,
+          })
+        );
+        setPlayers(playersArray);
+      }
+    };
+
+    // 2. Register the listener
+    socket.on("playerDataChanged", handlePlayerDataChanged);
+
+    // 3. Return a cleanup function
+    return () => {
+      console.log("Cleaning up 'playerDataChanged' listener");
+      // This removes the listener when the component unmounts
+      socket.off("playerDataChanged", handlePlayerDataChanged);
+    };
+  }, [socket]);
 
   // Effect to set default values for the transfer form
   useEffect(() => {
@@ -29,13 +78,14 @@ const LobbyPageGameMaster = () => {
   // --- Handler Functions ---
 
   const handleSetDealer = (playerId) => {
+    console.log(`Setting dealer to player ID: ${playerId}`);
     setPlayers((currentPlayers) =>
       currentPlayers.map((p) => ({
         ...p,
         dealer: p.id === playerId,
       }))
     );
-    // In a real app: socket.emit('setDealer', { roomId, playerId });
+    socket.emit("dealerChange", roomId, playerId);
   };
 
   const handleRemovePlayer = (playerId) => {

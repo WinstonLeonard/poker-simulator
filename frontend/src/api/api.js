@@ -7,4 +7,10 @@ const roomChecker = async (roomId) => {
   return data;
 };
 
-export { roomChecker };
+const getRoomData = async (roomId) => {
+  const response = await fetch(`${BASE_URL}/api/roomData/${roomId}`);
+  const data = await response.json();
+  return data;
+};
+
+export { roomChecker, getRoomData };
