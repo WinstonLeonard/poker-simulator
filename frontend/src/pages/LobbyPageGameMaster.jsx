@@ -41,12 +41,7 @@ const LobbyPageGameMaster = () => {
     // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
       if (roomData && roomData.players) {
-        const playersArray = Object.entries(roomData.players).map(
-          ([id, data]) => ({
-            id,
-            ...data,
-          })
-        );
+        const playersArray = convertPlayersObjectToArray(roomData.players);
         setPlayers(playersArray);
       }
     };
