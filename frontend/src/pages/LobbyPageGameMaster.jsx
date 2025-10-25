@@ -145,7 +145,7 @@ const LobbyPageGameMaster = () => {
   const handleStartGame = () => {
     console.log("Starting the game!");
     // In a real app: socket.emit('startGame', roomId);
-    // navigate(`/game/${roomId}`);
+    navigate(`/gameroom/${roomId}`);
   };
 
   // --- NEW: Handle End Room ---

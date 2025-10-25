@@ -3,6 +3,7 @@
 import HomePage from "./pages/HomePage"; // Adjust the path if you saved it elsewhere
 import PlayerProvider from "./context/PlayerProvider";
 import LobbyPage from "./pages/LobbyPage";
+import GameRoomPage from "./pages/GameRoomPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/lobby/:roomId" element={<LobbyPage />} />
+          <Route path="/gameroom/:roomId" element={<GameRoomPage />} />
         </Routes>
       </Router>
     </PlayerProvider>
