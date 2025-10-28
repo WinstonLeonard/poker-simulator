@@ -46,13 +46,20 @@ const LobbyPageGameMaster = () => {
       }
     };
 
+    const handleGameStart = () => {
+      console.log("game start");
+      navigate(`/gameroom/${roomId}`);
+    };
+
     // 2. Register the listener
     socket.on("playerDataChanged", handlePlayerDataChanged);
+    socket.on("gameStart", handleGameStart);
 
     // 3. Return a cleanup function
     return () => {
       // This removes the listener when the component unmounts
       socket.off("playerDataChanged", handlePlayerDataChanged);
+      socket.off("gameStart", handleGameStart);
     };
   }, [socket]);
 
@@ -145,7 +152,7 @@ const LobbyPageGameMaster = () => {
   const handleStartGame = () => {
     console.log("Starting the game!");
     // In a real app: socket.emit('startGame', roomId);
-    navigate(`/gameroom/${roomId}`);
+    socket.emit("gameStart", roomId);
   };
 
   // --- NEW: Handle End Room ---

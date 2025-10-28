@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../App.css";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
 import { getRoomData } from "../api/api";
 import { usePlayer } from "../context/PlayerProvider";
@@ -11,6 +11,7 @@ import {
 
 const LobbyPagePlayer = () => {
   const { roomId } = useParams();
+  const navigate = useNavigate();
   const [players, setPlayers] = useState([]);
   const { socket } = usePlayer();
 
@@ -27,6 +28,7 @@ const LobbyPagePlayer = () => {
   }, []);
 
   useEffect(() => {
+    console.log("SOCKET", socket);
     if (!socket) return;
 
     // 1. Define the handler function for your event
@@ -37,13 +39,20 @@ const LobbyPagePlayer = () => {
       }
     };
 
+    const handleGameStart = () => {
+      console.log("game starting");
+      navigate(`/gameroom/${roomId}`);
+    };
+
     // 2. Register the listener
     socket.on("playerDataChanged", handlePlayerDataChanged);
+    socket.on("gameStart", handleGameStart);
 
     // 3. Return a cleanup function
     return () => {
       // This removes the listener when the component unmounts
       socket.off("playerDataChanged", handlePlayerDataChanged);
+      socket.off("gameStart", handleGameStart);
     };
   }, [socket]);
 
