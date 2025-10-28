@@ -25,10 +25,19 @@ function GameRoomPage() {
       setGameState(gameStateData);
     };
 
+    const handleGameStateChange = (gameStateData) => {
+      console.log("Received Game State:", gameStateData);
+      setGameState(gameStateData);
+    };
+
     socket.on("preflop", handlePreflop);
+    socket.on("gameStateChange", handleGameStateChange);
 
     // 3️⃣ Clean up listener when unmounting
-    return () => socket.off("preflop", handlePreflop);
+    return () => {
+      socket.off("preflop", handlePreflop);
+      socket.off("gameStateChange", handleGameStateChange);
+    };
   }, [socket]);
 
   // --- Early return while waiting for data ---
@@ -52,11 +61,9 @@ function GameRoomPage() {
 
   // --- Derived values ---
   const heroPlayer = players.find((p) => p.id === id);
-  console.log(heroPlayer);
   const isHeroTurn = currentPlayerTurnId === id;
-  console.log("isHeroTurn", isHeroTurn);
   const opponents = players.filter((p) => p.id !== id);
-  const amountToCall = currentHighestBet - heroPlayer.currentBets;
+  const amountToCall = currentHighestBet - heroPlayer?.currentBets;
 
   // --- Action Handlers ---
   const handleFold = () => {
@@ -66,12 +73,12 @@ function GameRoomPage() {
 
   const handleCheck = () => {
     console.log("Hero Checks");
-    socket.emit("PLAYER_ACTION", { action: "check" });
+    socket.emit("check", roomId, id);
   };
 
   const handleCall = () => {
     console.log(`Hero Calls $${amountToCall}`);
-    socket.emit("PLAYER_ACTION", { action: "call", amount: amountToCall });
+    socket.emit("call", roomId, id, amountToCall);
   };
 
   const handleBet = (amount) => {
