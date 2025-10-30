@@ -82,9 +82,9 @@ function GameRoomPage() {
   };
 
   const handleBet = (amount) => {
-    const action = amountToCall > 0 ? "raise" : "bet";
+    const action = amountToCall > 0 ? "Raise" : "Bet";
     console.log(`Hero ${action}s $${amount}`);
-    socket.emit("PLAYER_ACTION", { action, amount });
+    socket.emit("betOrRaise", roomId, id, amount, action);
   };
 
   const handleAllIn = () => {

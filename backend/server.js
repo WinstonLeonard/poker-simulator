@@ -139,6 +139,7 @@ io.on("connection", (socket) => {
       status: "",
       currentBets:
         player.id === smallBlindId ? 5 : player.id === bigBlindId ? 10 : 0,
+      raiseTimes: 0,
     }));
 
     updatedPlayers[smallBlindIndex].status = "Small Blind";
@@ -161,7 +162,6 @@ io.on("connection", (socket) => {
     };
 
     gameStateCollection[roomId] = gameState;
-    console.log("GAME STATE", gameState);
   });
 
   socket.on("check", (roomId, id) => {
@@ -200,6 +200,7 @@ io.on("connection", (socket) => {
           player.status === "folded" || player.status === "all-in"
             ? player.status
             : "",
+        raiseTimes: 0,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
@@ -229,7 +230,6 @@ io.on("connection", (socket) => {
 
   socket.on("call", (roomId, id, amount) => {
     const gameState = gameStateCollection[roomId];
-    console.log("GAME STATE FROM COLLECTION", gameState);
 
     // Update player's money, bet, and status
     gameState.players = gameState.players.map((player) =>
@@ -238,7 +238,7 @@ io.on("connection", (socket) => {
             ...player,
             money: player.money - amount,
             currentBets: player.currentBets + amount,
-            status: `Call $${amount}`,
+            status: `Call $${gameState.currentHighestBet}`,
           }
         : player
     );
@@ -281,6 +281,7 @@ io.on("connection", (socket) => {
           player.status === "folded" || player.status === "all-in"
             ? player.status
             : "",
+        raiseTimes: 0,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
@@ -304,6 +305,44 @@ io.on("connection", (socket) => {
     gameStateCollection[roomId] = gameState;
 
     // Emit updated state
+    io.to(roomId).emit("gameStateChange", gameState);
+  });
+
+  socket.on("betOrRaise", (roomId, id, amount, action) => {
+    const gameState = gameStateCollection[roomId];
+    gameState.totalPlayersCalledOrCheck = 1;
+    const previousBet = gameState.players.find(
+      (player) => player.id === id
+    ).currentBets;
+    // Update player's money, bet, and status
+    gameState.players = gameState.players.map((player) =>
+      player.id == id
+        ? {
+            ...player,
+            money: player.money + previousBet - amount,
+            currentBets: amount,
+            status: `${action} $${amount}`,
+            raiseTimes: action === "bet" ? 0 : 1,
+          }
+        : player
+    );
+    gameState.pot = gameState.pot - previousBet + amount;
+    gameState.currentHighestBet = amount;
+    const numOfPlayers = gameState.players.length;
+    const currentIndex = gameState.players.findIndex((p) => p.id === id);
+
+    // Find next active (non-folded) player
+    let nextIndex = (currentIndex + 1) % numOfPlayers;
+    for (let i = 0; i < numOfPlayers; i++) {
+      const player = gameState.players[nextIndex];
+      if (player.status !== "folded" && player.status !== "all-in") {
+        gameState.currentPlayerTurnId = player.id;
+        break;
+      }
+      nextIndex = (nextIndex + 1) % numOfPlayers;
+    }
+    gameStateCollection[roomId] = gameState;
+    console.log("GAMESTATE", gameState);
     io.to(roomId).emit("gameStateChange", gameState);
   });
 

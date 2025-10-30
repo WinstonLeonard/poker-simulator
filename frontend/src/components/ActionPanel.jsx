@@ -19,6 +19,7 @@ const ActionPanel = ({
 
   const canCheck = amountToCall === 0;
   const isShortStack = player.money < minRaise;
+  const hasReachedRaiseLimit = player.raiseTimes >= 1; // ✅ new condition
 
   // --- SHORT STACK SCENARIO ---
   if (isShortStack) {
@@ -67,6 +68,7 @@ const ActionPanel = ({
           value={betAmount}
           onChange={(e) => setBetAmount(parseInt(e.target.value))}
           className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+          disabled={hasReachedRaiseLimit} // ✅ disable slider
         />
 
         <div className="flex justify-between text-xs text-slate-400">
@@ -102,9 +104,16 @@ const ActionPanel = ({
 
         <button
           onClick={() => onBet(betAmount)}
-          className="col-span-2 py-2 px-3 sm:py-3 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+          disabled={hasReachedRaiseLimit}
+          className={`col-span-2 py-2 px-3 sm:py-3 sm:px-4 font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95 ${
+            hasReachedRaiseLimit
+              ? "bg-gray-500 cursor-not-allowed text-gray-300"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+          }`}
         >
-          {amountToCall > 0 ? "Raise to" : "Bet"}: ${betAmount}
+          {hasReachedRaiseLimit
+            ? "Raise Limit Reached"
+            : `${amountToCall > 0 ? "Raise to" : "Bet"}: $${betAmount}`}
         </button>
       </div>
     </div>
