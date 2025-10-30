@@ -64,7 +64,7 @@ const ActionPanel = ({
           type="range"
           min={minRaise}
           max={player.money}
-          step="10"
+          step="5"
           value={betAmount}
           onChange={(e) => setBetAmount(parseInt(e.target.value))}
           className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"

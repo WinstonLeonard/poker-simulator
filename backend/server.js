@@ -328,10 +328,10 @@ io.on("connection", (socket) => {
     );
     gameState.pot = gameState.pot - previousBet + amount;
     gameState.currentHighestBet = amount;
-    const numOfPlayers = gameState.players.length;
-    const currentIndex = gameState.players.findIndex((p) => p.id === id);
 
     // Find next active (non-folded) player
+    const currentIndex = gameState.players.findIndex((p) => p.id === id);
+    const numOfPlayers = gameState.players.length;
     let nextIndex = (currentIndex + 1) % numOfPlayers;
     for (let i = 0; i < numOfPlayers; i++) {
       const player = gameState.players[nextIndex];
@@ -342,8 +342,38 @@ io.on("connection", (socket) => {
       nextIndex = (nextIndex + 1) % numOfPlayers;
     }
     gameStateCollection[roomId] = gameState;
-    console.log("GAMESTATE", gameState);
     io.to(roomId).emit("gameStateChange", gameState);
+  });
+
+  socket.on("fold", (roomId, id) => {
+    const gameState = gameStateCollection[roomId];
+    gameState.players = gameState.players.map((player) =>
+      player.id == id
+        ? {
+            ...player,
+            status: `folded`,
+          }
+        : player
+    );
+    gameState.totalPlayingPlayers = gameState.totalPlayingPlayers - 1;
+    // Find next active (non-folded) player
+    const currentIndex = gameState.players.findIndex((p) => p.id === id);
+    const numOfPlayers = gameState.players.length;
+    let nextIndex = (currentIndex + 1) % numOfPlayers;
+    for (let i = 0; i < numOfPlayers; i++) {
+      const player = gameState.players[nextIndex];
+      if (player.status !== "folded" && player.status !== "all-in") {
+        gameState.currentPlayerTurnId = player.id;
+        break;
+      }
+      nextIndex = (nextIndex + 1) % numOfPlayers;
+    }
+    gameStateCollection[roomId] = gameState;
+    io.to(roomId).emit("gameStateChange", gameState);
+  });
+
+  socket.on("all-in", (roomId, id, amount) => {
+    const gameState = gameStateCollection[roomId];
   });
 
   socket.on("requestGameState", (roomId) => {

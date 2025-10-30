@@ -68,7 +68,7 @@ function GameRoomPage() {
   // --- Action Handlers ---
   const handleFold = () => {
     console.log("Hero Folds");
-    socket.emit("PLAYER_ACTION", { action: "fold" });
+    socket.emit("fold", roomId, id);
   };
 
   const handleCheck = () => {
