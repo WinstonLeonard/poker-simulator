@@ -38,7 +38,7 @@ function GameRoomPage() {
       socket.off("preflop", handlePreflop);
       socket.off("gameStateChange", handleGameStateChange);
     };
-  }, [socket]);
+  }, [socket, roomId]);
 
   // --- Early return while waiting for data ---
   if (!gameState) {
@@ -63,7 +63,9 @@ function GameRoomPage() {
   const heroPlayer = players.find((p) => p.id === id);
   const isHeroTurn = currentPlayerTurnId === id;
   const opponents = players.filter((p) => p.id !== id);
-  const amountToCall = currentHighestBet - heroPlayer?.currentBets;
+  const amountToCall =
+    (heroPlayer ? currentHighestBet - heroPlayer.currentBets : 0) || 0;
+  const isShowdown = gameStage === "SHOWDOWN";
 
   // --- Action Handlers ---
   const handleFold = () => {
@@ -89,9 +91,26 @@ function GameRoomPage() {
 
   const handleAllIn = () => {
     const action = amountToCall > 0 ? "raise" : "bet";
+    const amount = heroPlayer?.money ?? 0;
     console.log(`Hero ${action}s $${amount}`);
-    socket.emit("PLAYER_ACTION", { action, amount });
+    // Keep your existing routing — you can swap this to a dedicated "all-in" if you added one
+    socket.emit("PLAYER_ACTION", {
+      action: "all-in",
+      amount,
+      roomId,
+      playerId: id,
+    });
   };
+
+  // --- Game Master: Award Pot ---
+  const handleAwardPot = (winnerId) => {
+    // You said you'll handle backend logic; this emits a clear event the server can process.
+    console.log("winner Id", winnerId);
+    socket.emit("awardPot", { roomId, winnerId });
+  };
+
+  // Helper: candidates visible to GM at showdown (non-folded players by default)
+  const showdownCandidates = players; // show all players at SHOWDOWN
 
   // --- UI ---
   return (
@@ -116,7 +135,11 @@ function GameRoomPage() {
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
             Current Stage
           </span>
-          <h3 className="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1">
+          <h3
+            className={`text-2xl sm:text-3xl font-bold mt-1 ${
+              isShowdown ? "text-rose-400" : "text-emerald-400"
+            }`}
+          >
             {gameStage}
           </h3>
         </div>
@@ -130,6 +153,66 @@ function GameRoomPage() {
             ${pot.toLocaleString()}
           </h2>
         </div>
+
+        {/* Player SHOWDOWN banner */}
+        {!gameMaster && isShowdown && (
+          <div className="mt-6 bg-slate-800/70 backdrop-blur rounded-xl px-6 py-4 border border-slate-700 text-center max-w-xl">
+            <p className="text-sm text-slate-300 uppercase tracking-widest">
+              SHOWDOWN
+            </p>
+            <p className="text-base sm:text-lg text-slate-200 mt-1">
+              Waiting for game master to select the winner…
+            </p>
+            <p className="text-xs text-slate-400 mt-2">
+              Actions are disabled for all players.
+            </p>
+          </div>
+        )}
+
+        {/* Game Master SHOWDOWN controls */}
+        {gameMaster && isShowdown && (
+          <div className="mt-6 w-full max-w-2xl bg-slate-800/80 backdrop-blur rounded-2xl p-5 border border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-rose-300">
+                Showdown Controls
+              </h4>
+              <span className="text-xs text-slate-400 uppercase tracking-widest">
+                Game Master Only
+              </span>
+            </div>
+
+            <p className="text-sm text-slate-300 mb-3">
+              Select the winner to award the pot.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {showdownCandidates.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleAwardPot(p.id)}
+                  className="flex items-center justify-between w-full rounded-xl border border-slate-600 bg-slate-900/60 px-4 py-3 hover:bg-slate-900 transition shadow"
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-semibold">
+                      {p.name ?? p.id}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {p.status || "active"}
+                    </span>
+                  </div>
+                  <span className="text-xs text-emerald-300">Award Pot →</span>
+                </button>
+              ))}
+            </div>
+
+            {showdownCandidates.length === 0 && (
+              <div className="text-center text-slate-400 text-sm mt-3">
+                No eligible players to award (all folded?). You can still handle
+                this on the backend.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* --- Hero (You) Area --- */}
@@ -143,8 +226,8 @@ function GameRoomPage() {
             currentBet={heroPlayer.currentBets}
           />
 
-          {/* Action Panel: Only shows when it's your turn */}
-          {isHeroTurn && (
+          {/* Action Panel: Only when it's your turn AND NOT SHOWDOWN */}
+          {isHeroTurn && !isShowdown && (
             <ActionPanel
               player={heroPlayer}
               amountToCall={amountToCall}

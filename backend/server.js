@@ -356,24 +356,94 @@ io.on("connection", (socket) => {
         : player
     );
     gameState.totalPlayingPlayers = gameState.totalPlayingPlayers - 1;
-    // Find next active (non-folded) player
-    const currentIndex = gameState.players.findIndex((p) => p.id === id);
-    const numOfPlayers = gameState.players.length;
-    let nextIndex = (currentIndex + 1) % numOfPlayers;
-    for (let i = 0; i < numOfPlayers; i++) {
-      const player = gameState.players[nextIndex];
-      if (player.status !== "folded" && player.status !== "all-in") {
-        gameState.currentPlayerTurnId = player.id;
-        break;
-      }
-      nextIndex = (nextIndex + 1) % numOfPlayers;
+    // --- Case 1: Last remaining player ---
+
+    if (gameState.totalPlayingPlayers == 1) {
+      gameState.gameStage = "SHOWDOWN";
     }
+    // --- Case 2: Everyone has called/checked ---
+    else if (
+      gameState.totalPlayersCalledOrCheck === gameState.totalPlayingPlayers
+    ) {
+      const nextStage = (currStage) => {
+        if (currStage === "PREFLOP") return "FLOP";
+        if (currStage === "FLOP") return "RIVER";
+        if (currStage === "RIVER") return "TURN";
+        if (currStage === "TURN") return "SHOWDOWN";
+        return currStage;
+      };
+      gameState.gameStage = nextStage(gameState.gameStage);
+
+      // Find the small blind player
+      const numOfPlayers = gameState.players.length;
+      const dealerIndex = gameState.players.findIndex((p) => p.dealer);
+      const smallBlindIndex = (dealerIndex + 1) % numOfPlayers;
+
+      // Find next active (non-folded) player starting from small blind
+      let nextIndex = smallBlindIndex;
+      for (let i = 0; i < numOfPlayers; i++) {
+        const player = gameState.players[nextIndex];
+        if (player.status !== "folded") {
+          gameState.currentPlayerTurnId = player.id;
+          break;
+        }
+        nextIndex = (nextIndex + 1) % numOfPlayers;
+      }
+
+      gameState.players = gameState.players.map((player) => ({
+        ...player,
+        currentBets: 0,
+        status:
+          player.status === "folded" || player.status === "all-in"
+            ? player.status
+            : "",
+        raiseTimes: 0,
+      }));
+      gameState.currentHighestBet = 0;
+      gameState.totalPlayersCalledOrCheck = 0;
+
+      // --- Case 2: Not everyone has called/checked ---
+    } else {
+      const numOfPlayers = gameState.players.length;
+      const currentIndex = gameState.players.findIndex((p) => p.id === id);
+
+      // Find next active (non-folded) player
+      let nextIndex = (currentIndex + 1) % numOfPlayers;
+      for (let i = 0; i < numOfPlayers; i++) {
+        const player = gameState.players[nextIndex];
+        if (player.status !== "folded") {
+          gameState.currentPlayerTurnId = player.id;
+          break;
+        }
+        nextIndex = (nextIndex + 1) % numOfPlayers;
+      }
+    }
+    console.log(gameState);
     gameStateCollection[roomId] = gameState;
     io.to(roomId).emit("gameStateChange", gameState);
   });
 
-  socket.on("all-in", (roomId, id, amount) => {
-    const gameState = gameStateCollection[roomId];
+  socket.on("all-in", (roomId, id) => {
+    // const gameState = gameStateCollection[roomId];
+    // const previousBet = gameState.players.find(
+    //   (player) => player.id === id
+    // ).currentBets;
+    // const totalMoney = gameState.players.find(
+    //   (player) => player.id === id
+    // ).money;
+    // // Update player's money, bet, and status
+    // gameState.players = gameState.players.map((player) =>
+    //   player.id == id
+    //     ? {
+    //         ...player,
+    //         currentBets: totalMoney,
+    //         money: 0,
+    //         status: `all-in`,
+    //       }
+    //     : player
+    // );
+    // gameState.pot = gameState.pot - previousBet + totalMoney;
+    // gameState.totalPlayingPlayers = gameState.totalPlayingPlayers - 1;
   });
 
   socket.on("requestGameState", (roomId) => {
