@@ -551,6 +551,11 @@ io.on("connection", (socket) => {
     if (gameState) socket.emit("preflop", gameState);
   });
 
+  socket.on("reconnectAndRequestGameState", (roomId) => {
+    const gameState = gameStateCollection[roomId];
+    io.to(socket.id).emit("gameStateChange", gameState);
+  });
+
   // Handle messages from players in the game room
   socket.on("message", (roomId, msg) => {
     console.log(`Message from room ${roomId}:`, msg);

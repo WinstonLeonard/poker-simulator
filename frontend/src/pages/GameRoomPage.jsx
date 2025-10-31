@@ -39,14 +39,14 @@ function GameRoomPage() {
     // 3️⃣ Handle reconnects
     const handleReconnect = () => {
       console.log("🔄 Reconnected, requesting latest game state...");
-      socket.emit("requestGameState", roomId);
+      socket.emit("reconnectAndRequestGameState", roomId);
     };
 
     // 4️⃣ Handle tab visibility (mobile app switch / tab switch)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         console.log("🔄 Tab visible again, requesting latest game state...");
-        socket.emit("requestGameState", roomId);
+        socket.emit("reconnectAndRequestGameState", roomId);
       }
     };
 
