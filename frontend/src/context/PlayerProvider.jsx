@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { io } from "socket.io-client";
+import { BASE_URL } from "../api/api";
 
 const PlayerContext = createContext(null);
 
@@ -9,7 +10,7 @@ const PlayerProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [id, setId] = useState("");
   useEffect(() => {
-    const newSocket = io("http://localhost:5000");
+    const newSocket = io(BASE_URL);
 
     newSocket.on("connect", () => {
       console.log("Socket connected ✅", newSocket.id);

@@ -19,4 +19,4 @@ const contactServer = async () => {
   return data;
 };
 
-export { roomChecker, getRoomData, contactServer };
+export { roomChecker, getRoomData, contactServer, BASE_URL };
