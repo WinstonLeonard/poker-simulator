@@ -18,15 +18,15 @@ const ActionPanel = ({
   }, [minRaise]);
 
   const canCheck = amountToCall === 0;
-  const isShortStack = player.money < minRaise;
-  const hasReachedRaiseLimit = player.raiseTimes >= 1; // ✅ new condition
+  const cannotCall = amountToCall > player.money;
+  const hasReachedRaiseLimit = player.raiseTimes >= 1;
+  const notEnoughToRaise = minRaise > player.money;
 
-  // --- SHORT STACK SCENARIO ---
-  if (isShortStack) {
+  if (cannotCall) {
     return (
       <div className="w-full max-w-2xl bg-slate-700/80 backdrop-blur-md rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col items-center gap-4">
         <h2 className="text-white font-bold text-lg sm:text-xl text-center">
-          Not enough chips to meet the minimum raise!
+          You don’t have enough to call (${amountToCall}). You may go All-In.
         </h2>
         <div className="flex gap-4 justify-center">
           <button
@@ -104,15 +104,15 @@ const ActionPanel = ({
 
         <button
           onClick={() => onBet(betAmount)}
-          disabled={hasReachedRaiseLimit}
+          disabled={hasReachedRaiseLimit || notEnoughToRaise}
           className={`col-span-2 py-2 px-3 sm:py-3 sm:px-4 font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95 ${
-            hasReachedRaiseLimit
+            hasReachedRaiseLimit || notEnoughToRaise
               ? "bg-gray-500 cursor-not-allowed text-gray-300"
               : "bg-emerald-600 hover:bg-emerald-700 text-white"
           }`}
         >
           {hasReachedRaiseLimit
-            ? "Raise Limit Reached"
+            ? "Cannot raise anymore"
             : `${amountToCall > 0 ? "Raise to" : "Bet"}: $${betAmount}`}
         </button>
       </div>

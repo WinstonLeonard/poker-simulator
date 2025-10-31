@@ -90,16 +90,15 @@ function GameRoomPage() {
   };
 
   const handleAllIn = () => {
-    const action = amountToCall > 0 ? "raise" : "bet";
-    const amount = heroPlayer?.money ?? 0;
-    console.log(`Hero ${action}s $${amount}`);
-    // Keep your existing routing — you can swap this to a dedicated "all-in" if you added one
-    socket.emit("PLAYER_ACTION", {
-      action: "all-in",
-      amount,
-      roomId,
-      playerId: id,
-    });
+    const amountToCall = Math.max(
+      0,
+      currentHighestBet - (heroPlayer?.currentBets ?? 0)
+    );
+    if ((heroPlayer?.money ?? 0) >= amountToCall) {
+      // Not allowed by rule; guard on frontend too
+      return;
+    }
+    socket.emit("all-in", roomId, id);
   };
 
   // --- Game Master: Award Pot ---
