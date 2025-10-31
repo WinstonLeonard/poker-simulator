@@ -5,6 +5,6 @@
     "socket.io": "^4.8.1"
   },
   "scripts": {
-    "dev": "node server.js"
+    "dev": "nodemon server.js"
   }
 }

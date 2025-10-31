@@ -7,6 +7,7 @@ import ActionPanel from "../components/ActionPanel";
 
 // --- Main Game Room Page ---
 function GameRoomPage() {
+  const navigate = useNavigate;
   const { roomId } = useParams();
   const { socket, gameMaster, id } = usePlayer();
 
@@ -32,7 +33,6 @@ function GameRoomPage() {
 
     socket.on("preflop", handlePreflop);
     socket.on("gameStateChange", handleGameStateChange);
-
     // 3️⃣ Clean up listener when unmounting
     return () => {
       socket.off("preflop", handlePreflop);
@@ -104,8 +104,8 @@ function GameRoomPage() {
   // --- Game Master: Award Pot ---
   const handleAwardPot = (winnerId) => {
     // You said you'll handle backend logic; this emits a clear event the server can process.
-    console.log("winner Id", winnerId);
-    socket.emit("awardPot", { roomId, winnerId });
+    socket.emit("awardPot", roomId, winnerId);
+    navigate(`lobby/${roomId}`);
   };
 
   // Helper: candidates visible to GM at showdown (non-folded players by default)

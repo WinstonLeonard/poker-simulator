@@ -88,7 +88,6 @@ io.on("connection", (socket) => {
     console.log(`Room id: ${roomId} created`);
     socket.join(roomId); // Join the room
     rooms[roomId] = { players: {}, gameStart: false };
-    console.log(rooms);
   });
 
   // Join a game room
@@ -113,7 +112,6 @@ io.on("connection", (socket) => {
 
   socket.on("playerDataChange", (roomId, playerData) => {
     rooms[roomId].players = playerData;
-    console.log("updated room data", rooms[roomId]);
     io.to(roomId).emit("playerDataChanged", rooms[roomId]);
   });
 
@@ -418,32 +416,121 @@ io.on("connection", (socket) => {
         nextIndex = (nextIndex + 1) % numOfPlayers;
       }
     }
-    console.log(gameState);
     gameStateCollection[roomId] = gameState;
     io.to(roomId).emit("gameStateChange", gameState);
   });
 
   socket.on("all-in", (roomId, id) => {
-    // const gameState = gameStateCollection[roomId];
-    // const previousBet = gameState.players.find(
-    //   (player) => player.id === id
-    // ).currentBets;
-    // const totalMoney = gameState.players.find(
-    //   (player) => player.id === id
-    // ).money;
-    // // Update player's money, bet, and status
-    // gameState.players = gameState.players.map((player) =>
-    //   player.id == id
-    //     ? {
-    //         ...player,
-    //         currentBets: totalMoney,
-    //         money: 0,
-    //         status: `all-in`,
-    //       }
-    //     : player
-    // );
-    // gameState.pot = gameState.pot - previousBet + totalMoney;
-    // gameState.totalPlayingPlayers = gameState.totalPlayingPlayers - 1;
+    const gameState = gameStateCollection[roomId];
+    const previousBet = gameState.players.find(
+      (player) => player.id === id
+    ).currentBets;
+    const totalMoney = gameState.players.find(
+      (player) => player.id === id
+    ).money;
+    // Update player's money, bet, and status
+    gameState.players = gameState.players.map((player) =>
+      player.id == id
+        ? {
+            ...player,
+            currentBets: totalMoney,
+            money: 0,
+            status: `all-in`,
+          }
+        : player
+    );
+    gameState.pot = gameState.pot - previousBet + totalMoney;
+    gameState.totalPlayingPlayers = gameState.totalPlayingPlayers - 1;
+    if (gameState.totalPlayersCalledOrCheck === gameState.totalPlayingPlayers) {
+      const nextStage = (currStage) => {
+        if (currStage === "PREFLOP") return "FLOP";
+        if (currStage === "FLOP") return "RIVER";
+        if (currStage === "RIVER") return "TURN";
+        if (currStage === "TURN") return "SHOWDOWN";
+        return currStage;
+      };
+      gameState.gameStage = nextStage(gameState.gameStage);
+
+      // Find the small blind player
+      const numOfPlayers = gameState.players.length;
+      const dealerIndex = gameState.players.findIndex((p) => p.dealer);
+      const smallBlindIndex = (dealerIndex + 1) % numOfPlayers;
+
+      // Find next active (non-folded) player starting from small blind
+      let nextIndex = smallBlindIndex;
+      for (let i = 0; i < numOfPlayers; i++) {
+        const player = gameState.players[nextIndex];
+        if (player.status !== "folded") {
+          gameState.currentPlayerTurnId = player.id;
+          break;
+        }
+        nextIndex = (nextIndex + 1) % numOfPlayers;
+      }
+
+      gameState.players = gameState.players.map((player) => ({
+        ...player,
+        currentBets: 0,
+        status:
+          player.status === "folded" || player.status === "all-in"
+            ? player.status
+            : "",
+        raiseTimes: 0,
+      }));
+      gameState.currentHighestBet = 0;
+      gameState.totalPlayersCalledOrCheck = 0;
+
+      // --- Case 2: Not everyone has called/checked ---
+    } else {
+      const numOfPlayers = gameState.players.length;
+      const currentIndex = gameState.players.findIndex((p) => p.id === id);
+
+      // Find next active (non-folded) player
+      let nextIndex = (currentIndex + 1) % numOfPlayers;
+      for (let i = 0; i < numOfPlayers; i++) {
+        const player = gameState.players[nextIndex];
+        if (player.status !== "folded") {
+          gameState.currentPlayerTurnId = player.id;
+          break;
+        }
+        nextIndex = (nextIndex + 1) % numOfPlayers;
+      }
+    }
+    gameStateCollection[roomId] = gameState;
+    io.to(roomId).emit("gameStateChange", gameState);
+  });
+
+  socket.on("awardPot", (roomId, winnerId) => {
+    const gameState = gameStateCollection[roomId];
+    gameState.players = gameState.players.map((player) =>
+      player.id == winnerId
+        ? {
+            ...player,
+            money: player.money + gameState.pot,
+          }
+        : player
+    );
+    let nextDealerId = "";
+    for (let i = 0; i < gameState.players.length; i++) {
+      const playerInGameState = gameState.players[i];
+      const playerId = playerInGameState.id;
+      const playerDataInRooms = rooms[roomId].players[playerId];
+      const updatedDataInRooms = {
+        ...playerDataInRooms,
+        money: playerInGameState.money,
+        dealer: false,
+      };
+      rooms[roomId].players[playerId] = updatedDataInRooms;
+      if (playerInGameState.dealer == true) {
+        const nextDealerIndex = i + 1 === gameState.players.length ? 0 : i + 1;
+        nextDealerId = gameState.players[nextDealerIndex].id;
+      }
+    }
+    const oldDealerData = rooms[roomId].players[nextDealerId];
+    const newDealerData = { ...oldDealerData, dealer: true };
+    rooms[roomId].players[nextDealerId] = newDealerData;
+    console.log("ROOMS DATA", rooms[roomId].players);
+    console.log("GAME STATE COLLECTION", gameStateCollection[roomId].players);
+    //io.to(roomId).emit("backToLobby", roomId);
   });
 
   socket.on("requestGameState", (roomId) => {
@@ -459,7 +546,6 @@ io.on("connection", (socket) => {
 
   // Handle game start event
   socket.on("startGame", (roomId) => {
-    console.log(`Game started in room ${roomId}`);
     io.to(roomId).emit("message", "The game has started!");
   });
 
