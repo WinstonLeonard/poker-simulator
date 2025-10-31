@@ -17,31 +17,53 @@ function GameRoomPage() {
   useEffect(() => {
     if (!socket || !roomId) return;
 
-    // 1️⃣ Ask the server for the latest state
+    // 1️⃣ Ask the server for the latest state immediately on mount
     socket.emit("requestGameState", roomId);
 
-    // 2️⃣ Listen for the game state when server sends it back
+    // 2️⃣ Handle server-sent updates
     const handlePreflop = (gameStateData) => {
-      console.log("Received Game State:", gameStateData);
+      console.log("Received Game State (preflop):", gameStateData);
       setGameState(gameStateData);
     };
 
     const handleGameStateChange = (gameStateData) => {
-      console.log("Received Game State:", gameStateData);
+      console.log("Received Game State (change):", gameStateData);
       setGameState(gameStateData);
     };
 
     const handleBackToLobby = () => {
+      console.log("Navigating back to lobby...");
       navigate(`/lobby/${roomId}`);
     };
+
+    // 3️⃣ Handle reconnects
+    const handleReconnect = () => {
+      console.log("🔄 Reconnected, requesting latest game state...");
+      socket.emit("requestGameState", roomId);
+    };
+
+    // 4️⃣ Handle tab visibility (mobile app switch / tab switch)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("🔄 Tab visible again, requesting latest game state...");
+        socket.emit("requestGameState", roomId);
+      }
+    };
+
+    // ✅ Register all listeners
     socket.on("preflop", handlePreflop);
     socket.on("gameStateChange", handleGameStateChange);
     socket.on("backToLobby", handleBackToLobby);
-    // 3️⃣ Clean up listener when unmounting
+    socket.on("reconnect", handleReconnect);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // 🧹 Clean up on unmount
     return () => {
       socket.off("preflop", handlePreflop);
       socket.off("gameStateChange", handleGameStateChange);
       socket.off("backToLobby", handleBackToLobby);
+      socket.off("reconnect", handleReconnect);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [socket, roomId]);
 

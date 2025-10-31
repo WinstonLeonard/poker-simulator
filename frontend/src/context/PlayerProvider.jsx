@@ -10,7 +10,13 @@ const PlayerProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [id, setId] = useState("");
   useEffect(() => {
-    const newSocket = io(BASE_URL);
+    const newSocket = io(BASE_URL, {
+      transports: ["websocket"], // force pure WebSocket (no polling)
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000, // 1s initial delay
+      reconnectionDelayMax: 5000, // up to 5s
+    });
 
     newSocket.on("connect", () => {
       console.log("Socket connected ✅", newSocket.id);
