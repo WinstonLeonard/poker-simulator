@@ -22,14 +22,7 @@ function HomePage() {
         const response = await contactServer(); // wait for response
         console.log("Server response:", response);
         setIsLoading(false); // ✅ stop loading when done
-      } catch (error) {
-        console.error("Failed to contact server:", error);
-        setModalMessage(
-          "Failed to connect to the server. Please try again later."
-        );
-        setIsModalOpen(true);
-        setIsLoading(false);
-      }
+      } catch (error) {}
     };
 
     fetchServer();
