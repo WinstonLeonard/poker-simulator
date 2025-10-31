@@ -121,9 +121,8 @@ io.on("connection", (socket) => {
     const numOfPlayers = a.length;
     const dealerIndex = a.findIndex((player) => player.dealer === true);
     const dealerId = a.find((player) => player.dealer === true).id;
-    const smallBlindIndex =
-      dealerIndex + 1 == numOfPlayers ? 0 : dealerIndex + 1;
-    const bigBlindIndex = dealerIndex + 2 >= numOfPlayers ? 1 : dealerIndex + 2;
+    const smallBlindIndex = (dealerIndex + 1) % numOfPlayers;
+    const bigBlindIndex = (dealerIndex + 2) % numOfPlayers;
     const currentPlayerTurnIndex =
       bigBlindIndex + 1 == numOfPlayers ? 0 : bigBlindIndex + 1;
     const smallBlindId = a[smallBlindIndex].id;
@@ -530,7 +529,7 @@ io.on("connection", (socket) => {
     rooms[roomId].players[nextDealerId] = newDealerData;
     console.log("ROOMS DATA", rooms[roomId].players);
     console.log("GAME STATE COLLECTION", gameStateCollection[roomId].players);
-    //io.to(roomId).emit("backToLobby", roomId);
+    io.to(roomId).emit("backToLobby");
   });
 
   socket.on("requestGameState", (roomId) => {
