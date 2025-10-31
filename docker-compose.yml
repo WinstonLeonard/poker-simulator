@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: poker-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+    # Optional: If backend needs access to DB or CORS from frontend
+    networks:
+      - poker-net
+
+  frontend:
+    build: ./frontend
+    container_name: poker-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - poker-net
+
+networks:
+  poker-net:
+    driver: bridge

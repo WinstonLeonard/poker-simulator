@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const roomChecker = async (roomId) => {
   const response = await fetch(`${BASE_URL}/api/rooms/${roomId}`);
@@ -13,4 +13,10 @@ const getRoomData = async (roomId) => {
   return data;
 };
 
-export { roomChecker, getRoomData };
+const contactServer = async () => {
+  const response = await fetch(`${BASE_URL}/api/contactServer`);
+  const data = await response.json();
+  return data;
+};
+
+export { roomChecker, getRoomData, contactServer };

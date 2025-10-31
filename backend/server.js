@@ -56,6 +56,12 @@ const io = socketIo(server, {
 const rooms = {};
 const gameStateCollection = {};
 
+app.get("/api/contactServer", (req, res) => {
+  res.status(200).json({
+    status: 200,
+  });
+});
+
 app.get("/api/rooms/:roomId", (req, res) => {
   const { roomId } = req.params;
 
