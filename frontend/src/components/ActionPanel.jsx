@@ -10,8 +10,11 @@ const ActionPanel = ({
   onCall,
   onBet,
   onAllIn,
+  forceRaise = false,
 }) => {
-  const minAllowed = amountToCall > 0 ? minRaise : minBet;
+  const stack = player.money ?? 0;
+  const isRaiseAction = amountToCall > 0 || forceRaise;
+  const minAllowed = isRaiseAction ? minRaise : minBet;
   const [betAmount, setBetAmount] = useState(minAllowed);
 
   useEffect(() => {
@@ -19,9 +22,15 @@ const ActionPanel = ({
   }, [minAllowed]);
 
   const canCheck = amountToCall === 0;
-  const cannotCall = amountToCall > player.money;
+  const cannotCall = amountToCall > stack;
   const hasReachedRaiseLimit = player.raiseTimes >= 1;
-  const notEnoughToRaise = minRaise > player.money;
+  const insufficientForMin = minAllowed > stack;
+  const noChips = stack <= 0;
+  const minLabel = isRaiseAction ? "Min raise" : "Min bet";
+  const callLabel =
+    amountToCall > 0
+      ? `To call: $${amountToCall.toLocaleString()}`
+      : `${minLabel}: $${minAllowed.toLocaleString()}`;
 
   if (cannotCall) {
     return (
@@ -52,17 +61,14 @@ const ActionPanel = ({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-semibold text-slate-200 sm:text-base">
-            {amountToCall > 0 ? "Raise Amount" : "Bet Amount"}
+            {isRaiseAction ? "Raise Amount" : "Bet Amount"}
           </span>
           <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-400/40">
-            Stack ${player.money.toLocaleString()}
+            Stack ${stack.toLocaleString()}
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] text-slate-400">
-            {amountToCall > 0 ? "To call" : "Min bet"}: $
-            {(amountToCall > 0 ? amountToCall : minBet).toLocaleString()}
-          </span>
+          <span className="text-[11px] text-slate-400">{callLabel}</span>
           <span className="rounded-xl bg-slate-950/70 px-4 py-1 text-lg font-semibold text-emerald-200">
             ${betAmount}
           </span>
@@ -71,19 +77,19 @@ const ActionPanel = ({
         <input
           type="range"
           min={minAllowed}
-          max={player.money}
+          max={Math.max(stack, minAllowed)}
           step="5"
           value={betAmount}
           onChange={(e) => setBetAmount(parseInt(e.target.value))}
           className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-emerald-400"
-          disabled={hasReachedRaiseLimit}
+          disabled={hasReachedRaiseLimit || insufficientForMin || noChips}
         />
 
         <div className="flex justify-between text-[11px] text-slate-400">
           <span>
-            ${minAllowed} {amountToCall > 0 ? "min raise" : "min bet"}
+            ${minAllowed} {isRaiseAction ? "min raise" : "min bet"}
           </span>
-          <span>${player.money} all-in</span>
+          <span>${stack} all-in</span>
         </div>
       </div>
 
@@ -113,16 +119,20 @@ const ActionPanel = ({
 
         <button
           onClick={() => onBet(betAmount)}
-          disabled={hasReachedRaiseLimit || notEnoughToRaise}
+          disabled={hasReachedRaiseLimit || insufficientForMin || noChips}
           className={`col-span-2 rounded-xl px-3 py-2 text-sm font-semibold shadow transition active:scale-95 sm:px-4 sm:py-3 ${
-            hasReachedRaiseLimit || notEnoughToRaise
+            hasReachedRaiseLimit || insufficientForMin || noChips
               ? "cursor-not-allowed bg-slate-700 text-slate-400"
               : "bg-emerald-500/90 text-white hover:bg-emerald-500"
           }`}
         >
           {hasReachedRaiseLimit
             ? "Cannot raise anymore"
-            : `${amountToCall > 0 ? "Raise to" : "Bet"}: $${betAmount}`}
+            : noChips
+            ? "No chips left"
+            : insufficientForMin
+            ? "Insufficient stack"
+            : `${isRaiseAction ? "Raise to" : "Bet"}: $${betAmount}`}
         </button>
       </div>
     </div>

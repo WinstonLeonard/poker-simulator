@@ -147,6 +147,13 @@ function GameRoomPage() {
   const showdownCandidates = players;
   const amountToCall =
     (heroPlayer ? currentHighestBet - heroPlayer.currentBets : 0) || 0;
+  const isPreflop = gameStage === "PREFLOP";
+  const isPreflopBigBlind =
+    isPreflop &&
+    heroPlayer &&
+    amountToCall === 0 &&
+    currentHighestBet > 0 &&
+    heroPlayer.currentBets === currentHighestBet;
   const showHero = !gameMaster && heroPlayer;
   const hasDockedAction = showHero && isHeroTurn && !isShowdown;
   const pagePadding = hasDockedAction ? "pb-32 sm:pb-12" : "pb-12";
@@ -168,7 +175,11 @@ function GameRoomPage() {
   };
 
   const handleBet = (amount) => {
-    const action = amountToCall > 0 ? "Raise" : "Bet";
+    const maxBet = heroPlayer?.money ?? 0;
+    if (!Number.isFinite(amount) || amount <= 0 || amount > maxBet) {
+      return;
+    }
+    const action = amountToCall > 0 || isPreflopBigBlind ? "Raise" : "Bet";
     console.log(`Hero ${action}s $${amount}`);
     socket.emit("betOrRaise", roomId, id, amount, action);
   };
@@ -614,6 +625,7 @@ function GameRoomPage() {
                           amountToCall={amountToCall}
                           minBet={10}
                           minRaise={2 * currentHighestBet}
+                          forceRaise={isPreflopBigBlind}
                           onFold={handleFold}
                           onCheck={handleCheck}
                           onCall={handleCall}
