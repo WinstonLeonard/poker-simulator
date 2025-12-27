@@ -1,43 +1,28 @@
-import React from "react";
+﻿import React from "react";
 
 const PlayerCard = ({ player }) => {
-  return (
-    <div className="w-full bg-slate-800 rounded-xl shadow-lg p-5 transform transition-all hover:scale-[1.03] hover:shadow-cyan-500/20">
-      <div className="flex items-center justify-between">
-        {/* Left Side: Icon, Name, Money */}
-        <div className="flex items-center gap-4">
-          {/* User Icon */}
-          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-cyan-600 rounded-full">
-            <svg
-              className="w-7 h-7 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              ></path>
-            </svg>
-          </div>
+  const displayName = player.name ?? "Player";
 
-          {/* Name and Money */}
+  return (
+    <div className="w-full rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-lg backdrop-blur transition hover:border-emerald-300/40">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 text-base font-semibold text-white shadow">
+            {displayName.charAt(0)}
+          </div>
           <div>
-            <h3 className="text-xl font-bold text-white">{player.name}</h3>
-            <p className="text-md text-emerald-400 font-semibold">
+            <h3 className="text-base font-semibold text-white font-display">
+              {displayName}
+            </h3>
+            <p className="text-sm font-semibold text-emerald-300">
               ${player.money.toLocaleString()}
             </p>
           </div>
         </div>
-
-        {/* Right Side: Dealer Badge (Conditional) */}
         {player.dealer && (
-          <div className="flex-shrink-0 bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-            DEALER
-          </div>
+          <span className="rounded-full bg-amber-300/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-900">
+            Dealer
+          </span>
         )}
       </div>
     </div>

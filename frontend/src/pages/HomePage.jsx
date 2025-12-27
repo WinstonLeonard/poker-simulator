@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import "../App.css";
 import { usePlayer } from "../context/PlayerProvider";
 import { useNavigate } from "react-router-dom";
@@ -11,43 +11,52 @@ function HomePage() {
   const [gmGamePin, setGmGamePin] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true); // 🆕 loading state
+  const [isLoading, setIsLoading] = useState(true);
   const { setPlayerName, playerName, setGameMaster, socket } = usePlayer();
 
-  // 🧠 Call backend once when page loads
   useEffect(() => {
     const fetchServer = async () => {
       try {
-        console.log("Contacting server...");
-        const response = await contactServer(); // wait for response
-        console.log("Server response:", response);
-        setIsLoading(false); // ✅ stop loading when done
-      } catch (error) {}
+        await contactServer();
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchServer();
   }, []);
 
-  // ⏳ Show loading screen first
   if (isLoading) {
     return (
-      <main className="bg-slate-900 min-h-screen flex flex-col items-center justify-center text-white">
-        <h1 className="text-4xl font-bold mb-4 animate-pulse">
-          Connecting to Server...
-        </h1>
-        <p className="text-slate-400 text-lg">Please wait a moment.</p>
+      <main className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-[120px]" />
+          <div className="absolute bottom-[-140px] right-[-120px] h-[360px] w-[360px] rounded-full bg-amber-300/10 blur-[120px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.4),_transparent_55%)]" />
+        </div>
+        <div className="relative z-10 flex min-h-screen items-center justify-center px-6 text-center">
+          <div className="fade-up rounded-3xl border border-white/10 bg-slate-900/70 px-6 py-8 backdrop-blur">
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+              Connecting
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold font-display">
+              Reaching the poker server...
+            </h1>
+            <p className="mt-3 text-sm text-slate-300">
+              Warming up the table and waiting for a response.
+            </p>
+          </div>
+        </div>
       </main>
     );
   }
 
-  // --- Random PIN generator ---
   const generateRandomNumber = () => {
     const min = 100000;
     const max = 999999;
     return Math.floor(min + Math.random() * (max - min)).toString();
   };
 
-  // --- Join Game handler ---
   const handleJoinGame = async () => {
     if (!playerName.trim()) {
       setModalMessage("Please enter your name.");
@@ -73,16 +82,13 @@ function HomePage() {
     }
   };
 
-  // --- Create Game handler ---
   const handleCreateGame = () => {
     const newGameId = generateRandomNumber();
-    console.log(`Creating new game with ID: ${newGameId}`);
     socket.emit("createRoom", newGameId.toString(), playerName);
     setGameMaster(true);
     navigate(`/lobby/${newGameId}`);
   };
 
-  // --- Rejoin Game handler ---
   const handleRejoinGame = async (gameMaster = false) => {
     if (!gameMaster && !playerName.trim()) {
       setModalMessage("Please enter your name.");
@@ -108,90 +114,135 @@ function HomePage() {
     }
   };
 
-  // --- Main UI ---
   return (
-    <main className="bg-slate-900 min-h-screen flex flex-col items-center justify-center p-4 text-white font-sans">
-      <h1 className="text-5xl md:text-6xl font-extrabold mb-10 text-center animate-pulse">
-        Poker Simulator 🃏
-      </h1>
-
-      {/* Player name input */}
-      <div className="w-full max-w-sm mb-8">
-        <label className="text-lg font-medium text-slate-400 mb-2 block text-center">
-          Enter Your Name
-        </label>
-        <input
-          type="text"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          placeholder="ENTER YOUR NAME"
-          className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-center text-xl placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
-        />
+    <main className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-[120px]" />
+        <div className="absolute bottom-[-140px] right-[-120px] h-[360px] w-[360px] rounded-full bg-amber-300/10 blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.45),_transparent_55%)]" />
+        <div className="absolute inset-0 opacity-30 [background:radial-gradient(transparent_1px,rgba(148,163,184,0.12)_1px)] [background-size:26px_26px]" />
       </div>
 
-      <div className="w-full max-w-4xl flex flex-col md:flex-row justify-center gap-8">
-        {/* Join Game */}
-        <div className="bg-slate-800 p-8 rounded-xl shadow-2xl flex-1 transform hover:scale-105 transition-transform duration-300">
-          <h2 className="text-3xl font-bold mb-6 text-center text-cyan-400">
-            Join a Game 🧩
-          </h2>
-          <input
-            type="text"
-            value={gamePin}
-            onChange={(e) => setGamePin(e.target.value.toUpperCase())}
-            placeholder="ENTER GAME PIN"
-            className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-center text-xl font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition-all mb-4"
-          />
-          <button
-            onClick={handleJoinGame}
-            className="w-full bg-cyan-600 hover:bg-cyan-700 font-bold py-3 px-4 rounded-lg text-lg transition-transform duration-200 active:scale-95 shadow-lg"
-          >
-            Join Game
-          </button>
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-4 py-10 font-body md:px-8">
+        <div className="fade-up text-center">
+          <h1 className="text-3xl font-semibold font-display sm:text-4xl">
+            Poker Chips Simulator 🃏
+          </h1>
+          <p className="mt-2 text-sm text-slate-300">
+            Set your seat, invite friends, and jump straight into the action.
+          </p>
         </div>
 
-        {/* Divider */}
-        <div className="flex items-center">
-          <span className="text-slate-600 font-bold text-2xl">OR</span>
-        </div>
+        <section className="fade-up rounded-3xl border border-white/10 bg-slate-900/60 px-6 py-6 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                Player Profile
+              </p>
+              <h2 className="mt-1 text-lg font-semibold font-display">
+                Enter your display name
+              </h2>
+            </div>
+            <span className="text-xs text-slate-400">Visible to the table</span>
+          </div>
+          <div className="mt-4">
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="ENTER YOUR NAME"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4 text-center text-lg font-semibold text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+            />
+          </div>
+        </section>
 
-        {/* Game Master Section */}
-        <div className="bg-slate-800 p-8 rounded-xl shadow-2xl flex-1 transform hover:scale-105 transition-transform duration-300">
-          <h2 className="text-3xl font-bold mb-6 text-center text-violet-400">
-            Game Master Admin ✨
-          </h2>
-          <button
-            onClick={handleCreateGame}
-            className="w-full bg-violet-600 hover:bg-violet-700 font-bold py-3 px-4 rounded-lg text-lg transition-transform duration-200 active:scale-95 shadow-lg"
-          >
-            Create New Game
-          </button>
-
-          <div className="flex items-center my-6">
-            <div className="flex-grow border-t border-slate-700"></div>
-            <span className="flex-shrink mx-4 text-slate-500 font-bold">
-              OR
-            </span>
-            <div className="flex-grow border-t border-slate-700"></div>
+        <section
+          className="fade-up grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+          style={{ animationDelay: "220ms" }}
+        >
+          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                  Player Seat
+                </p>
+                <h3 className="mt-1 text-xl font-semibold font-display">
+                  Join a game
+                </h3>
+              </div>
+              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-200 ring-1 ring-emerald-400/40">
+                Ready
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-300">
+              Enter the game PIN from your host to sit at the table.
+            </p>
+            <input
+              type="text"
+              value={gamePin}
+              onChange={(e) => setGamePin(e.target.value.toUpperCase())}
+              placeholder="ENTER GAME PIN"
+              className="mt-4 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4 text-center text-lg font-semibold tracking-[0.3em] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+            />
+            <button
+              onClick={handleJoinGame}
+              className="mt-4 w-full rounded-2xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-500"
+            >
+              Join Game
+            </button>
           </div>
 
-          <input
-            type="text"
-            value={gmGamePin}
-            onChange={(e) => setGmGamePin(e.target.value.toUpperCase())}
-            placeholder="ENTER GAME PIN"
-            className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-center text-xl font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-blue-500 transition-all mb-4"
-          />
-          <button
-            onClick={handleRejoinGame}
-            className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-3 px-4 rounded-lg text-lg transition-transform duration-200 active:scale-95 shadow-lg"
-          >
-            Rejoin as Game Master
-          </button>
-        </div>
+          <div className="hidden h-full w-px bg-gradient-to-b from-transparent via-slate-700/70 to-transparent lg:block" />
+
+          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                  Game Master
+                </p>
+                <h3 className="mt-1 text-xl font-semibold font-display">
+                  Create or rejoin
+                </h3>
+              </div>
+              <span className="rounded-full bg-rose-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-200 ring-1 ring-rose-400/40">
+                Control
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-300">
+              Start a new table or jump back into an existing room.
+            </p>
+            <button
+              onClick={handleCreateGame}
+              className="mt-4 w-full rounded-2xl bg-rose-500/90 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-rose-500"
+            >
+              Create New Game
+            </button>
+
+            <div className="my-5 flex items-center">
+              <div className="flex-grow border-t border-slate-700/80" />
+              <span className="mx-3 text-[11px] uppercase tracking-[0.4em] text-slate-500">
+                or
+              </span>
+              <div className="flex-grow border-t border-slate-700/80" />
+            </div>
+
+            <input
+              type="text"
+              value={gmGamePin}
+              onChange={(e) => setGmGamePin(e.target.value.toUpperCase())}
+              placeholder="ENTER GAME PIN"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4 text-center text-lg font-semibold tracking-[0.3em] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
+            />
+            <button
+              onClick={handleRejoinGame}
+              className="mt-4 w-full rounded-2xl border border-rose-400/40 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-rose-200 shadow transition hover:border-rose-300/70 hover:text-rose-100"
+            >
+              Rejoin as Game Master
+            </button>
+          </div>
+        </section>
       </div>
 
-      {/* Error Modal */}
       <ErrorModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

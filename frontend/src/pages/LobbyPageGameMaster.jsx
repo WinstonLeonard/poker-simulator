@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import "../App.css";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePlayer } from "../context/PlayerProvider";
@@ -16,7 +16,6 @@ const LobbyPageGameMaster = () => {
   const [players, setPlayers] = useState([]);
   const { socket } = usePlayer();
 
-  // State for the transfer form
   const [transferFrom, setTransferFrom] = useState("");
   const [transferTo, setTransferTo] = useState("");
   const [transferAmount, setTransferAmount] = useState(0);
@@ -25,7 +24,6 @@ const LobbyPageGameMaster = () => {
     const fetchRoomData = async () => {
       try {
         const data = await getRoomData(roomId);
-        // Transform data.players from object to array
         const playersArray = convertPlayersObjectToArray(data.players);
         setPlayers(playersArray);
       } catch (error) {
@@ -38,7 +36,6 @@ const LobbyPageGameMaster = () => {
   useEffect(() => {
     if (!socket) return;
 
-    // 1. Define the handler function for your event
     const handlePlayerDataChanged = (roomData) => {
       if (roomData && roomData.players) {
         const playersArray = convertPlayersObjectToArray(roomData.players);
@@ -47,31 +44,24 @@ const LobbyPageGameMaster = () => {
     };
 
     const handleGameStart = () => {
-      console.log("game start");
       navigate(`/gameroom/${roomId}`);
     };
 
-    // 2. Register the listener
     socket.on("playerDataChanged", handlePlayerDataChanged);
     socket.on("gameStart", handleGameStart);
 
-    // 3. Return a cleanup function
     return () => {
-      // This removes the listener when the component unmounts
       socket.off("playerDataChanged", handlePlayerDataChanged);
       socket.off("gameStart", handleGameStart);
     };
-  }, [socket]);
+  }, [socket, roomId, navigate]);
 
-  // Effect to set default values for the transfer form
   useEffect(() => {
     if (players.length > 1) {
       setTransferFrom(players[0].id);
       setTransferTo(players[1].id);
     }
   }, [players]);
-
-  // --- Handler Functions ---
 
   const handleSetDealer = (playerId) => {
     const updatedPlayers = players.map((p) => ({
@@ -94,7 +84,6 @@ const LobbyPageGameMaster = () => {
       roomId,
       convertPlayersArrayToObject(updatedPlayers)
     );
-    // In a real app: socket.emit('removePlayer', { roomId, playerId });
   };
 
   const handleUpdateMoney = (playerId, amount) => {
@@ -103,7 +92,7 @@ const LobbyPageGameMaster = () => {
     const updatedPlayers = players.map((p) => {
       if (p.id === playerId) {
         const newMoney = p.money + numAmount;
-        return { ...p, money: newMoney < 0 ? 0 : newMoney }; // Prevent negative money
+        return { ...p, money: newMoney < 0 ? 0 : newMoney };
       }
       return p;
     });
@@ -118,7 +107,6 @@ const LobbyPageGameMaster = () => {
   const handleTransferMoney = () => {
     const numAmount = parseInt(transferAmount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      // Use a custom modal or just log, avoid alert()
       console.warn("Please enter a valid amount to transfer.");
       return;
     }
@@ -150,134 +138,180 @@ const LobbyPageGameMaster = () => {
   };
 
   const handleStartGame = () => {
-    console.log("Starting the game!");
-    // In a real app: socket.emit('startGame', roomId);
     socket.emit("gameStart", roomId);
   };
 
-  // --- NEW: Handle End Room ---
   const handleEndRoom = () => {
-    // In a real app, you would show a confirmation modal here instead of alert()
     console.log("Attempting to end room...");
-    // For demo, we'll just log and navigate
   };
 
-  // --- Render ---
-
   return (
-    <main className="bg-slate-900 min-h-screen flex flex-col items-center p-4 md:p-8 text-white font-sans">
-      {/* Header */}
-      <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-center animate-pulse">
-        Game Master Lobby 🃏
-      </h1>
-      <div className="bg-slate-700 px-6 py-2 rounded-full mb-10 shadow-lg">
-        <p className="text-lg md:text-xl text-cyan-300 font-mono tracking-widest">
-          ROOM: <strong>{roomId}</strong>
-        </p>
+    <main className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-[120px]" />
+        <div className="absolute bottom-[-140px] right-[-120px] h-[360px] w-[360px] rounded-full bg-amber-300/10 blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.45),_transparent_55%)]" />
+        <div className="absolute inset-0 opacity-30 [background:radial-gradient(transparent_1px,rgba(148,163,184,0.12)_1px)] [background-size:26px_26px]" />
       </div>
 
-      {/* Main Dashboard Grid */}
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Column 1 & 2: Player Management */}
-        <div className="lg:col-span-2">
-          <h2 className="text-3xl font-bold mb-6 text-slate-300">
-            Player Management
-          </h2>
-          <div className="flex flex-col gap-6">
-            {players.length > 0 ? (
-              players.map((player) => (
-                <GMPlayerCard
-                  key={player.id}
-                  player={player}
-                  onSetDealer={handleSetDealer}
-                  onUpdateMoney={handleUpdateMoney}
-                  onRemovePlayer={handleRemovePlayer}
-                />
-              ))
-            ) : (
-              <p className="text-slate-400 text-center text-lg">
-                Waiting for players to join...
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-10 font-body md:px-8 text-left">
+        <section className="fade-up rounded-3xl border border-white/10 bg-slate-900/70 px-5 py-4 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                Game Master Lobby
               </p>
-            )}
-          </div>
-        </div>
-
-        {/* Column 3: Game Controls */}
-        <div className="lg:col-span-1">
-          <h2 className="text-3xl font-bold mb-6 text-slate-300">
-            Game Controls
-          </h2>
-          <div className="bg-slate-800 rounded-xl shadow-lg p-6 sticky top-8">
-            {/* Transfer Money Form */}
-            <h3 className="text-xl font-semibold text-white mb-4">
-              Transfer Money
-            </h3>
-            <div className="flex flex-col gap-3 mb-6">
-              <label className="text-sm font-medium text-slate-400">
-                From:
-              </label>
-              <select
-                value={transferFrom}
-                onChange={(e) => setTransferFrom(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              >
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              <label className="text-sm font-medium text-slate-400">To:</label>
-              <select
-                value={transferTo}
-                onChange={(e) => setTransferTo(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              >
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              <label className="text-sm font-medium text-slate-400">
-                Amount:
-              </label>
-              <input
-                type="number"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                placeholder="0"
-                className="w-full px-3 py-2 bg-slate-700 rounded-md text-white font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              />
-              <GMButton
-                onClick={handleTransferMoney}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold"
-              >
-                Transfer
-              </GMButton>
+              <h1 className="mt-1 text-2xl font-semibold font-display sm:text-3xl">
+                Room {roomId}
+              </h1>
             </div>
-
-            {/* Start/End Game Buttons */}
-            <div className="border-t border-slate-700 pt-6">
-              <button
-                onClick={handleStartGame}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xl font-bold text-white shadow-lg transition-all transform hover:scale-105"
-              >
-                Start Game
-              </button>
-
-              {/* --- NEW BUTTON --- */}
-              <button
-                onClick={handleEndRoom}
-                className="w-full mt-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-bold text-white shadow-lg transition-all"
-              >
-                End Room
-              </button>
-              {/* --- END NEW BUTTON --- */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-rose-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-200 ring-1 ring-rose-400/40">
+                Control
+              </span>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] uppercase tracking-[0.4em] text-slate-400">
+                  Players
+                </span>
+                <span className="text-lg font-semibold">
+                  {players.length}
+                </span>
+              </div>
             </div>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-300">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+              <span>Lobby ready</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.7)]" />
+              <span>Assign the dealer before starting</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+          <section
+            className="fade-up rounded-3xl border border-white/10 bg-slate-900/60 px-5 py-6 backdrop-blur"
+            style={{ animationDelay: "120ms" }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                  Player Management
+                </p>
+                <h2 className="mt-1 text-lg font-semibold font-display">
+                  Seats and balances
+                </h2>
+              </div>
+              <span className="text-xs text-slate-400">
+                {players.length} seated
+              </span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-4">
+              {players.length > 0 ? (
+                players.map((player) => (
+                  <GMPlayerCard
+                    key={player.id}
+                    player={player}
+                    onSetDealer={handleSetDealer}
+                    onUpdateMoney={handleUpdateMoney}
+                    onRemovePlayer={handleRemovePlayer}
+                  />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-600/60 bg-slate-950/40 px-6 py-5 text-center text-sm text-slate-400">
+                  Waiting for players to join...
+                </div>
+              )}
+            </div>
+          </section>
+
+          <aside className="lg:sticky lg:top-6 lg:self-start">
+            <section
+              className="fade-up rounded-3xl border border-white/10 bg-slate-900/60 px-5 py-6 backdrop-blur"
+              style={{ animationDelay: "220ms" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.4em] text-slate-400">
+                    Game Controls
+                  </p>
+                  <h3 className="mt-1 text-lg font-semibold font-display">
+                    Manage the table
+                  </h3>
+                </div>
+                <span className="rounded-full bg-slate-700/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-300">
+                  Live
+                </span>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                <h4 className="text-sm font-semibold text-slate-100">
+                  Transfer Money
+                </h4>
+                <div className="mt-3 flex flex-col gap-3 text-xs text-slate-400">
+                  <label className="font-semibold">From</label>
+                  <select
+                    value={transferFrom}
+                    onChange={(e) => setTransferFrom(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  >
+                    {players.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="font-semibold">To</label>
+                  <select
+                    value={transferTo}
+                    onChange={(e) => setTransferTo(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  >
+                    {players.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="font-semibold">Amount</label>
+                  <input
+                    type="number"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  />
+                  <GMButton
+                    onClick={handleTransferMoney}
+                    className="w-full bg-emerald-500/90 text-white hover:bg-emerald-500"
+                  >
+                    Transfer
+                  </GMButton>
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-white/10 pt-4">
+                <button
+                  onClick={handleStartGame}
+                  className="w-full rounded-2xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-500"
+                >
+                  Start Game
+                </button>
+                <button
+                  onClick={handleEndRoom}
+                  className="mt-3 w-full rounded-2xl border border-rose-400/40 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:border-rose-300/70 hover:text-rose-100"
+                >
+                  End Room
+                </button>
+              </div>
+            </section>
+          </aside>
         </div>
       </div>
     </main>

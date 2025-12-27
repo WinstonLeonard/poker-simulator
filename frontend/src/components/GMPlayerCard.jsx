@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState } from "react";
 import PlusIcon from "../Icons/PlusIcon";
 import MinusIcon from "../Icons/MinusIcon";
 import TrashIcon from "../Icons/TrashIcon";
 import UserIcon from "../Icons/UserIcon";
 import GMButton from "./GMButton";
+
 const GMPlayerCard = ({
   player,
   onSetDealer,
   onUpdateMoney,
   onRemovePlayer,
 }) => {
-  const [amount, setAmount] = useState(100); // State for the add/subtract input
+  const [amount, setAmount] = useState(100);
 
   const handleAddMoney = () => {
     const numAmount = parseInt(amount);
@@ -27,63 +28,61 @@ const GMPlayerCard = ({
   };
 
   return (
-    <div className="w-full bg-slate-800 rounded-xl shadow-lg p-5">
-      {/* Top Section: Player Info */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-700">
-        <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-cyan-600 rounded-full">
+    <div className="w-full rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-lg backdrop-blur">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 text-white shadow">
             <UserIcon />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">{player.name}</h3>
-            <p className="text-md text-emerald-400 font-semibold">
+            <h3 className="text-base font-semibold text-white font-display">
+              {player.name}
+            </h3>
+            <p className="text-sm font-semibold text-emerald-300">
               ${player.money.toLocaleString()}
             </p>
           </div>
         </div>
         {player.dealer && (
-          <div className="flex-shrink-0 bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-            DEALER
-          </div>
+          <span className="rounded-full bg-amber-300/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-900">
+            Dealer
+          </span>
         )}
       </div>
 
-      {/* Bottom Section: GM Controls */}
       <div className="pt-4">
-        {/* Money Controls */}
-        <div className="flex items-stretch gap-2 mb-3">
+        <div className="flex flex-wrap items-stretch gap-2">
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-700 rounded-md text-white font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="flex-1 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
           />
           <GMButton
             onClick={handleAddMoney}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-emerald-500/90 text-white hover:bg-emerald-500"
           >
             <PlusIcon />
           </GMButton>
           <GMButton
             onClick={handleSubtractMoney}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            className="bg-amber-400/90 text-slate-950 hover:bg-amber-300"
           >
             <MinusIcon />
           </GMButton>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <GMButton
             onClick={() => onSetDealer(player.id)}
             disabled={player.dealer}
-            className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white disabled:bg-slate-600 disabled:opacity-50"
+            className="flex-1 bg-sky-500/90 text-white hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-400"
           >
             Make Dealer
           </GMButton>
           <GMButton
             onClick={() => onRemovePlayer(player.id)}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            className="flex-1 bg-rose-500/90 text-white hover:bg-rose-500"
           >
             <span className="flex items-center justify-center gap-1.5">
               <TrashIcon /> Remove
