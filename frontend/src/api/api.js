@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL_PROD;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const roomChecker = async (roomId) => {
   const response = await fetch(`${BASE_URL}/api/rooms/${roomId}`);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 
 const ActionPanel = ({
   player,
@@ -11,11 +11,12 @@ const ActionPanel = ({
   onBet,
   onAllIn,
 }) => {
-  const [betAmount, setBetAmount] = useState(minRaise);
+  const minAllowed = amountToCall > 0 ? minRaise : minBet;
+  const [betAmount, setBetAmount] = useState(minAllowed);
 
   useEffect(() => {
-    setBetAmount(minRaise);
-  }, [minRaise]);
+    setBetAmount(minAllowed);
+  }, [minAllowed]);
 
   const canCheck = amountToCall === 0;
   const cannotCall = amountToCall > player.money;
@@ -24,20 +25,20 @@ const ActionPanel = ({
 
   if (cannotCall) {
     return (
-      <div className="w-full max-w-2xl bg-slate-700/80 backdrop-blur-md rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col items-center gap-4">
-        <h2 className="text-white font-bold text-lg sm:text-xl text-center">
-          You don’t have enough to call (${amountToCall}). You may go All-In.
+      <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900/70 p-5 shadow-2xl backdrop-blur">
+        <h2 className="text-center text-lg font-semibold text-white font-display sm:text-xl">
+          You don't have enough to call (${amountToCall}). You may go all-in.
         </h2>
-        <div className="flex gap-4 justify-center">
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
           <button
             onClick={onFold}
-            className="py-2 px-4 sm:py-3 sm:px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+            className="rounded-xl bg-rose-500/90 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-rose-500 active:scale-95 sm:px-6 sm:py-3"
           >
             Fold
           </button>
           <button
             onClick={onAllIn}
-            className="py-2 px-4 sm:py-3 sm:px-6 bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+            className="rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow transition hover:bg-amber-200 active:scale-95 sm:px-6 sm:py-3"
           >
             All In (${player.money})
           </button>
@@ -46,42 +47,50 @@ const ActionPanel = ({
     );
   }
 
-  // --- NORMAL SCENARIO ---
   return (
-    <div className="w-full max-w-2xl bg-slate-700/80 backdrop-blur-md rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col gap-4">
-      {/* Bet Slider */}
-      <div className="flex flex-col gap-2">
-        <div className="flex justify-between items-center">
-          <span className="text-white font-bold text-md sm:text-lg">
+    <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900/70 p-5 shadow-2xl backdrop-blur">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-slate-200 sm:text-base">
             {amountToCall > 0 ? "Raise Amount" : "Bet Amount"}
           </span>
-          <span className="text-white font-bold text-xl sm:text-2xl font-mono bg-slate-900 px-3 py-1 sm:px-4 sm:py-1 rounded-lg">
+          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-400/40">
+            Stack ${player.money.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] text-slate-400">
+            {amountToCall > 0 ? "To call" : "Min bet"}: $
+            {(amountToCall > 0 ? amountToCall : minBet).toLocaleString()}
+          </span>
+          <span className="rounded-xl bg-slate-950/70 px-4 py-1 text-lg font-semibold text-emerald-200">
             ${betAmount}
           </span>
         </div>
 
         <input
           type="range"
-          min={minRaise}
+          min={minAllowed}
           max={player.money}
           step="5"
           value={betAmount}
           onChange={(e) => setBetAmount(parseInt(e.target.value))}
-          className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
-          disabled={hasReachedRaiseLimit} // ✅ disable slider
+          className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-emerald-400"
+          disabled={hasReachedRaiseLimit}
         />
 
-        <div className="flex justify-between text-xs text-slate-400">
-          <span>${minRaise} (Min Raise)</span>
-          <span>${player.money} (All-in)</span>
+        <div className="flex justify-between text-[11px] text-slate-400">
+          <span>
+            ${minAllowed} {amountToCall > 0 ? "min raise" : "min bet"}
+          </span>
+          <span>${player.money} all-in</span>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <button
           onClick={onFold}
-          className="py-2 px-3 sm:py-3 sm:px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+          className="rounded-xl bg-rose-500/90 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-rose-500 active:scale-95 sm:px-4 sm:py-3"
         >
           Fold
         </button>
@@ -89,14 +98,14 @@ const ActionPanel = ({
         {canCheck ? (
           <button
             onClick={onCheck}
-            className="py-2 px-3 sm:py-3 sm:px-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+            className="rounded-xl bg-slate-600/80 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-600 active:scale-95 sm:px-4 sm:py-3"
           >
             Check
           </button>
         ) : (
           <button
             onClick={onCall}
-            className="py-2 px-3 sm:py-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95"
+            className="rounded-xl bg-sky-500/90 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500 active:scale-95 sm:px-4 sm:py-3"
           >
             Call ${amountToCall}
           </button>
@@ -105,10 +114,10 @@ const ActionPanel = ({
         <button
           onClick={() => onBet(betAmount)}
           disabled={hasReachedRaiseLimit || notEnoughToRaise}
-          className={`col-span-2 py-2 px-3 sm:py-3 sm:px-4 font-bold text-md sm:text-lg rounded-lg shadow-lg transition-transform active:scale-95 ${
+          className={`col-span-2 rounded-xl px-3 py-2 text-sm font-semibold shadow transition active:scale-95 sm:px-4 sm:py-3 ${
             hasReachedRaiseLimit || notEnoughToRaise
-              ? "bg-gray-500 cursor-not-allowed text-gray-300"
-              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              ? "cursor-not-allowed bg-slate-700 text-slate-400"
+              : "bg-emerald-500/90 text-white hover:bg-emerald-500"
           }`}
         >
           {hasReachedRaiseLimit

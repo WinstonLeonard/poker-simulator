@@ -546,6 +546,68 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("backToLobby");
   });
 
+  socket.on("splitPot", (roomId, splits) => {
+    const gameState = gameStateCollection[roomId];
+    if (!gameState || !Array.isArray(splits)) return;
+
+    const amounts = {};
+    let total = 0;
+    splits.forEach((entry) => {
+      if (!entry) return;
+      const amount = Number(entry.amount);
+      if (!Number.isFinite(amount) || amount < 0) return;
+      const playerId = entry.playerId;
+      if (!playerId) return;
+      amounts[playerId] = (amounts[playerId] || 0) + amount;
+      total += amount;
+    });
+
+    const potTotal = Number(gameState.pot);
+    const roundedTotal = Math.round(total * 100) / 100;
+    const roundedPot = Math.round(potTotal * 100) / 100;
+    if (!Number.isFinite(potTotal) || roundedTotal !== roundedPot) {
+      socket.emit("splitPotError", {
+        message: "Split amounts must equal the pot.",
+        total: roundedTotal,
+        pot: roundedPot,
+      });
+      return;
+    }
+
+    gameState.players = gameState.players.map((player) => {
+      const add = amounts[player.id] || 0;
+      return add > 0
+        ? {
+            ...player,
+            money: player.money + add,
+          }
+        : player;
+    });
+
+    let nextDealerId = "";
+    for (let i = 0; i < gameState.players.length; i++) {
+      const playerInGameState = gameState.players[i];
+      const playerId = playerInGameState.id;
+      const playerDataInRooms = rooms[roomId].players[playerId];
+      const updatedDataInRooms = {
+        ...playerDataInRooms,
+        money: playerInGameState.money,
+        dealer: false,
+      };
+      rooms[roomId].players[playerId] = updatedDataInRooms;
+      if (playerInGameState.dealer == true) {
+        const nextDealerIndex = i + 1 === gameState.players.length ? 0 : i + 1;
+        nextDealerId = gameState.players[nextDealerIndex].id;
+      }
+    }
+    const oldDealerData = rooms[roomId].players[nextDealerId];
+    const newDealerData = { ...oldDealerData, dealer: true };
+    rooms[roomId].players[nextDealerId] = newDealerData;
+    console.log("ROOMS DATA", rooms[roomId].players);
+    console.log("GAME STATE COLLECTION", gameStateCollection[roomId].players);
+    io.to(roomId).emit("backToLobby");
+  });
+
   socket.on("requestGameState", (roomId) => {
     const gameState = gameStateCollection[roomId];
     if (gameState) socket.emit("preflop", gameState);
