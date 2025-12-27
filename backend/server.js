@@ -333,7 +333,7 @@ io.on("connection", (socket) => {
             money: player.money + previousBet - amount,
             currentBets: amount,
             status: `${action} $${amount}`,
-            raiseTimes: action === "bet" ? 0 : 1,
+            raiseTimes: action === "Bet" ? 0 : 1,
           }
         : player
     );
