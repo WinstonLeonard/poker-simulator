@@ -19,6 +19,10 @@ function GameRoomPage() {
   useEffect(() => {
     if (!socket || !roomId) return;
 
+    const requestLatestGameState = () => {
+      socket.emit("reconnectAndRequestGameState", roomId);
+    };
+
     // Ask the server for the latest state immediately on mount
     socket.emit("requestGameState", roomId);
 
@@ -47,16 +51,16 @@ function GameRoomPage() {
     };
 
     // Handle reconnects
-    const handleReconnect = () => {
-      console.log("Reconnected, requesting latest game state...");
-      socket.emit("reconnectAndRequestGameState", roomId);
+    const handleConnect = () => {
+      console.log("Socket connected, requesting latest game state...");
+      requestLatestGameState();
     };
 
     // Handle tab visibility (mobile app switch / tab switch)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         console.log("Tab visible again, requesting latest game state...");
-        socket.emit("reconnectAndRequestGameState", roomId);
+        requestLatestGameState();
       }
     };
 
@@ -65,8 +69,12 @@ function GameRoomPage() {
     socket.on("gameStateChange", handleGameStateChange);
     socket.on("backToLobby", handleBackToLobby);
     socket.on("splitPotError", handleSplitPotError);
-    socket.on("reconnect", handleReconnect);
+    socket.on("connect", handleConnect);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    if (socket.connected) {
+      handleConnect();
+    }
 
     // Clean up on unmount
     return () => {
@@ -74,7 +82,7 @@ function GameRoomPage() {
       socket.off("gameStateChange", handleGameStateChange);
       socket.off("backToLobby", handleBackToLobby);
       socket.off("splitPotError", handleSplitPotError);
-      socket.off("reconnect", handleReconnect);
+      socket.off("connect", handleConnect);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [socket, roomId]);

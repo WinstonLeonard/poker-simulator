@@ -622,6 +622,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("reconnectAndRequestGameState", (roomId) => {
+    if (rooms[roomId]) {
+      socket.join(roomId);
+    }
     const gameState = gameStateCollection[roomId];
     io.to(socket.id).emit("gameStateChange", gameState);
   });
