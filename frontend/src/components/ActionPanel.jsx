@@ -13,8 +13,17 @@ const ActionPanel = ({
   forceRaise = false,
 }) => {
   const stack = player.money ?? 0;
+  const currentBets = player.currentBets ?? 0;
+  const roundStartMoneyValue =
+    player.roundStartMoney != null ? Number(player.roundStartMoney) : NaN;
+  const roundStartMoney = Number.isFinite(roundStartMoneyValue)
+    ? roundStartMoneyValue
+    : stack + currentBets;
   const isRaiseAction = amountToCall > 0 || forceRaise;
   const minAllowed = isRaiseAction ? minRaise : minBet;
+  const maxAllowed = isRaiseAction
+    ? Math.max(roundStartMoney, minAllowed)
+    : Math.max(stack, minAllowed);
   const [betAmount, setBetAmount] = useState(minAllowed);
 
   useEffect(() => {
@@ -24,9 +33,11 @@ const ActionPanel = ({
   const canCheck = amountToCall === 0;
   const cannotCall = amountToCall > stack;
   const hasReachedRaiseLimit = player.raiseTimes >= 1;
-  const insufficientForMin = minAllowed > stack;
+  const insufficientForMin =
+    minAllowed > (isRaiseAction ? roundStartMoney : stack);
   const noChips = stack <= 0;
   const minLabel = isRaiseAction ? "Min raise" : "Min bet";
+  const allInLabelAmount = isRaiseAction ? roundStartMoney : stack;
   const callLabel =
     amountToCall > 0
       ? `To call: $${amountToCall.toLocaleString()}`
@@ -63,9 +74,16 @@ const ActionPanel = ({
           <span className="text-sm font-semibold text-slate-200 sm:text-base">
             {isRaiseAction ? "Raise Amount" : "Bet Amount"}
           </span>
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-400/40">
-            Stack ${stack.toLocaleString()}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-400/40">
+              Stack ${stack.toLocaleString()}
+            </span>
+            {currentBets > 0 && (
+              <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-100 ring-1 ring-amber-400/40">
+                Committed ${currentBets.toLocaleString()}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-[11px] text-slate-400">{callLabel}</span>
@@ -77,7 +95,7 @@ const ActionPanel = ({
         <input
           type="range"
           min={minAllowed}
-          max={Math.max(stack, minAllowed)}
+          max={maxAllowed}
           step="5"
           value={betAmount}
           onChange={(e) => setBetAmount(parseInt(e.target.value))}
@@ -89,7 +107,7 @@ const ActionPanel = ({
           <span>
             ${minAllowed} {isRaiseAction ? "min raise" : "min bet"}
           </span>
-          <span>${stack} all-in</span>
+          <span>${allInLabelAmount} all-in</span>
         </div>
       </div>
 

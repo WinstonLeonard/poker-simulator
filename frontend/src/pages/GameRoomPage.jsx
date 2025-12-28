@@ -175,11 +175,19 @@ function GameRoomPage() {
   };
 
   const handleBet = (amount) => {
-    const maxBet = heroPlayer?.money ?? 0;
+    const isRaiseAction = amountToCall > 0 || isPreflopBigBlind;
+    const roundStartMoneyValue =
+      heroPlayer?.roundStartMoney != null
+        ? Number(heroPlayer.roundStartMoney)
+        : NaN;
+    const roundStartMoney = Number.isFinite(roundStartMoneyValue)
+      ? roundStartMoneyValue
+      : (heroPlayer?.money ?? 0) + (heroPlayer?.currentBets ?? 0);
+    const maxBet = isRaiseAction ? roundStartMoney : heroPlayer?.money ?? 0;
     if (!Number.isFinite(amount) || amount <= 0 || amount > maxBet) {
       return;
     }
-    const action = amountToCall > 0 || isPreflopBigBlind ? "Raise" : "Bet";
+    const action = isRaiseAction ? "Raise" : "Bet";
     console.log(`Hero ${action}s $${amount}`);
     socket.emit("betOrRaise", roomId, id, amount, action);
   };

@@ -145,13 +145,17 @@ io.on("connection", (socket) => {
     a[smallBlindIndex].money = a[smallBlindIndex].money - 5;
     a[bigBlindIndex].money = a[bigBlindIndex].money - 10;
 
-    const updatedPlayers = a.map((player) => ({
-      ...player,
-      status: "",
-      currentBets:
-        player.id === smallBlindId ? 5 : player.id === bigBlindId ? 10 : 0,
-      raiseTimes: 0,
-    }));
+    const updatedPlayers = a.map((player) => {
+      const blindAmount =
+        player.id === smallBlindId ? 5 : player.id === bigBlindId ? 10 : 0;
+      return {
+        ...player,
+        status: "",
+        currentBets: blindAmount,
+        raiseTimes: 0,
+        roundStartMoney: player.money + blindAmount,
+      };
+    });
 
     updatedPlayers[smallBlindIndex].status = "Small Blind";
     updatedPlayers[bigBlindIndex].status = "Big Blind";
@@ -212,6 +216,7 @@ io.on("connection", (socket) => {
             ? player.status
             : "",
         raiseTimes: 0,
+        roundStartMoney: player.money,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
@@ -293,6 +298,7 @@ io.on("connection", (socket) => {
             ? player.status
             : "",
         raiseTimes: 0,
+        roundStartMoney: player.money,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
@@ -409,6 +415,7 @@ io.on("connection", (socket) => {
             ? player.status
             : "",
         raiseTimes: 0,
+        roundStartMoney: player.money,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
@@ -488,6 +495,7 @@ io.on("connection", (socket) => {
             ? player.status
             : "",
         raiseTimes: 0,
+        roundStartMoney: player.money,
       }));
       gameState.currentHighestBet = 0;
       gameState.totalPlayersCalledOrCheck = 0;
