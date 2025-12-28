@@ -105,18 +105,37 @@ io.on("connection", (socket) => {
   });
 
   // Join a game room
-  socket.on("joinRoom", (roomId, playerName) => {
+  socket.on("joinRoom", (roomId, playerName, playerId) => {
     if (rooms[roomId]) {
       socket.join(roomId); // Join the room
-      if (!rooms[roomId].players[socket.id]) {
-        console.log(`player ${playerName}, ${socket.id} has joined the room`);
+      const resolvedPlayerId =
+        typeof playerId === "string" && playerId.trim()
+          ? playerId
+          : socket.id;
+      const resolvedName = typeof playerName === "string" ? playerName : "";
+      const existingPlayer = rooms[roomId].players[resolvedPlayerId];
+      if (!existingPlayer) {
+        console.log(
+          `player ${resolvedName}, ${resolvedPlayerId} has joined the room`
+        );
         const dealer = Object.keys(rooms[roomId].players).length === 0;
-        rooms[roomId].players[socket.id] = {
-          name: playerName,
+        rooms[roomId].players[resolvedPlayerId] = {
+          name: resolvedName,
           money: 1000,
           dealer: dealer,
         };
         io.to(roomId).emit("message", `A new player has joined room ${roomId}`);
+        io.to(roomId).emit("playerDataChanged", rooms[roomId]);
+        return;
+      }
+
+      const updatedPlayer = {
+        ...existingPlayer,
+        name: resolvedName || existingPlayer.name,
+      };
+      const nameChanged = updatedPlayer.name !== existingPlayer.name;
+      if (nameChanged) {
+        rooms[roomId].players[resolvedPlayerId] = updatedPlayer;
         io.to(roomId).emit("playerDataChanged", rooms[roomId]);
       }
     } else {

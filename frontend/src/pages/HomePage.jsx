@@ -12,7 +12,7 @@ function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const { setPlayerName, playerName, setGameMaster, socket } = usePlayer();
+  const { setPlayerName, playerName, setGameMaster, socket, id } = usePlayer();
 
   useEffect(() => {
     const fetchServer = async () => {
@@ -78,7 +78,7 @@ function HomePage() {
     } else {
       setGameMaster(false);
       navigate(`/lobby/${gamePin}`);
-      socket.emit("joinRoom", gamePin, playerName);
+      socket.emit("joinRoom", gamePin, playerName, id);
     }
   };
 
@@ -110,7 +110,7 @@ function HomePage() {
     } else {
       setGameMaster(true);
       navigate(`/lobby/${gmGamePin}`);
-      if (!gameMaster) socket.emit("joinRoom", gmGamePin, playerName);
+      if (!gameMaster) socket.emit("joinRoom", gmGamePin, playerName, id);
     }
   };
 
